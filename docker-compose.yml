@@ -1,0 +1,148 @@
+# PolicySentinel — Development Docker Compose
+#
+# Brings up PostgreSQL, Neo4j, the FastAPI backend, and the React frontend
+# in development mode (hot reload, bind-mounted source, verbose logging).
+#
+# For production, layer docker-compose.prod.yml on top:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# No application logic lives in this file — service wiring, env vars,
+# volumes, networking, and health checks only.
+
+networks:
+  policysentinel-network:
+    name: policysentinel-network
+    driver: bridge
+
+volumes:
+  postgres-data:
+  neo4j-data:
+  neo4j-logs:
+  neo4j-import:
+  neo4j-plugins:
+  backend-uploads:
+  backend-logs:
+
+services:
+
+  # ---------------------------------------------------------------------
+  # PostgreSQL — structured/relational data
+  # ---------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: policysentinel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-policysentinel}
+      POSTGRES_USER: ${POSTGRES_USER:-policysentinel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - policysentinel-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-policysentinel} -d ${POSTGRES_DB:-policysentinel}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------
+  # Neo4j — knowledge graph
+  # ---------------------------------------------------------------------
+  neo4j:
+    image: neo4j:5-community
+    container_name: policysentinel-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-changeme}
+      NEO4J_server_memory_pagecache_size: ${NEO4J_PAGECACHE_SIZE:-512M}
+      NEO4J_server_memory_heap_max__size: ${NEO4J_HEAP_MAX_SIZE:-1G}
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"   # Neo4j Browser
+      - "${NEO4J_BOLT_PORT:-7687}:7687"   # Bolt protocol
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - neo4j-import:/var/lib/neo4j/import
+      - neo4j-plugins:/plugins
+      - ./docker/neo4j/conf:/conf:ro
+    networks:
+      - policysentinel-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------
+  # Backend — FastAPI (development target: hot reload)
+  # ---------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+      target: ${BACKEND_TARGET:-development}
+    container_name: policysentinel-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Overrides any host-oriented DATABASE_URL/NEO4J_URI from .env: within
+      # the compose network, services must be addressed by service name
+      # (postgres/neo4j), not localhost — built here from the discrete
+      # credential vars so it's always correct regardless of .env contents.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-policysentinel}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-policysentinel}
+      NEO4J_URI: bolt://neo4j:7687
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    networks:
+      - policysentinel-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # ---------------------------------------------------------------------
+  # Frontend — React (development target: Vite dev server + HMR)
+  # ---------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+      target: ${FRONTEND_TARGET:-development}
+    container_name: policysentinel-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - policysentinel-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

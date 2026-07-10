@@ -1,0 +1,87 @@
+# PolicySentinel — Production Overlay (PLACEHOLDER)
+#
+# Not a deployable production config as-is — this documents the intended
+# shape of a production deployment on top of docker-compose.yml. Real
+# secrets management, TLS termination, and orchestration (e.g. Kubernetes,
+# ECS) should replace this file before go-live; it is provided as a
+# docker-compose-native placeholder suitable for a single-host deployment.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# No application logic is defined here — deployment-shape overrides only.
+
+services:
+
+  postgres:
+    restart: always
+    ports: []   # do not expose the DB port to the host in production
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  neo4j:
+    restart: always
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"   # keep Browser access behind a VPN/firewall rule, not public
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  backend:
+    build:
+      target: production
+    restart: always
+    # No bind mount in production — the image is immutable; uploads/logs
+    # remain on named volumes only.
+    volumes:
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+    deploy:
+      # NOTE: replicas > 1 requires removing the fixed container_name set in
+      # docker-compose.yml (container names must be unique per container).
+      # Horizontal scaling in real production is expected to be handled by
+      # an orchestrator (Kubernetes/ECS) rather than plain docker-compose;
+      # left at 1 here to keep this file runnable as a single-host placeholder.
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  frontend:
+    build:
+      target: production
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-80}:80"   # nginx serves on 80 in the production image, not 3000
+    volumes: []   # no bind mount — static assets are baked into the image
+    deploy:
+      # See note on backend.deploy.replicas above.
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+# --- Secrets (placeholder) ---
+# Production credentials should come from a secrets manager or Docker/K8s
+# secrets rather than the .env file used in development. Example shape
+# once adopted (requires `secrets:` blocks referencing external files,
+# omitted here since no secret material exists in this scaffold):
+#
+# secrets:
+#   postgres_password:
+#     external: true
+#   jwt_secret_key:
+#     external: true

@@ -1,0 +1,34 @@
+# Placeholder dependency list — versions to be pinned when implementation begins.
+
+# --- Web framework ---
+fastapi
+uvicorn[standard]
+
+# --- Data validation / settings ---
+pydantic
+pydantic-settings
+python-dotenv
+
+# --- PostgreSQL ---
+sqlalchemy
+alembic
+psycopg2-binary
+
+# --- Neo4j ---
+neo4j
+
+# --- Auth ---
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# --- AI / Claude API ---
+anthropic
+
+# --- Formal reasoning ---
+z3-solver
+
+# --- Testing ---
+pytest
+pytest-asyncio
+httpx

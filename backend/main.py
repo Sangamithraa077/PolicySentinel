@@ -1,0 +1,50 @@
+"""FastAPI application entrypoint.
+
+Wires together configuration, logging, CORS, global exception handling,
+the health check endpoint, versioned API routing, and the startup/shutdown
+lifespan — the backend foundation only. No business logic is registered
+here.
+"""
+
+import logging
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from api.health import router as health_router
+from api.v1.router import api_router
+from config.settings import get_settings
+from core.exceptions import register_exception_handlers
+from core.lifespan import lifespan
+from core.logging import configure_logging
+
+settings = get_settings()
+configure_logging(settings)
+logger = logging.getLogger(__name__)
+
+
+def create_app() -> FastAPI:
+    application = FastAPI(
+        title=settings.APP_NAME,
+        version=settings.APP_VERSION,
+        debug=settings.APP_DEBUG,
+        lifespan=lifespan,
+    )
+
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    register_exception_handlers(application)
+
+    application.include_router(health_router)
+    application.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+    return application
+
+
+app = create_app()

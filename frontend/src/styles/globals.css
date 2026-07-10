@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/*
+ * Class-based dark mode: toggled via ThemeProvider adding/removing `dark`
+ * on <html>. Tailwind v4 defaults to the `prefers-color-scheme` media
+ * query for `dark:`; this opts back into the class-based strategy.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Basic theme tokens (Tailwind v4 CSS-first config — no tailwind.config.js
+ * needed). Extend/adjust these as the real design system is built; this is
+ * a minimal placeholder palette only. Dark-mode surface colors are applied
+ * per-usage via dark: utilities rather than redefined here.
+ */
+@theme {
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-brand-50: oklch(0.97 0.02 250);
+  --color-brand-100: oklch(0.93 0.04 250);
+  --color-brand-500: oklch(0.55 0.18 250);
+  --color-brand-600: oklch(0.48 0.18 250);
+  --color-brand-700: oklch(0.4 0.16 250);
+
+  --color-surface: oklch(1 0 0);
+  --color-surface-muted: oklch(0.97 0 0);
+  --color-border: oklch(0.9 0 0);
+  --color-foreground: oklch(0.2 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border dark:border-neutral-800;
+  }
+
+  body {
+    @apply bg-surface-muted text-foreground antialiased transition-colors dark:bg-neutral-950 dark:text-neutral-100;
+  }
+}

@@ -1,0 +1,53 @@
+# --- Environment / Secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Python (backend) ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.sqlite3
+
+# --- Node / React (frontend) ---
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+*.local
+
+# --- Runtime data ---
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/README.md
+backend/logs/*
+!backend/logs/.gitkeep
+!backend/logs/README.md
+
+# --- Databases ---
+*.db
+postgres-data/
+neo4j-data/
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Claude Code (local/machine-specific) ---
+.claude/settings.local.json
+
+# --- Docker ---
+docker-compose.override.yml

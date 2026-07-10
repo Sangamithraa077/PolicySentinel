@@ -1,0 +1,45 @@
+# Applies to the repo-root build context used by backend/ and frontend/ image builds.
+
+# --- Version control ---
+.git
+.gitignore
+
+# --- Environment / secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Python ---
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# --- Node ---
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+
+# --- Runtime data (rebuilt at container start, not baked into images) ---
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/logs/*
+!backend/logs/.gitkeep
+
+# --- Docs / non-runtime project content ---
+docs/
+tests/
+scripts/
+*.md
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
