@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { ClauseViewerPage } from "@/pages/ClauseViewerPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { PoliciesPage } from "@/pages/PoliciesPage";
 import { ReportsPage } from "@/pages/ReportsPage";
@@ -14,6 +15,8 @@ export function App() {
         <Route index element={<DashboardPage />} />
         <Route path="policies" element={<PoliciesPage />} />
         <Route path="upload" element={<UploadPage />} />
+        <Route path="clauses" element={<ClauseViewerPage />} />
+        <Route path="clauses/:policyId" element={<ClauseViewerPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

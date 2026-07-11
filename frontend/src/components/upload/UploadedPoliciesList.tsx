@@ -1,4 +1,5 @@
-import { Download, FileWarning, Inbox, Loader2, RefreshCw } from "lucide-react";
+import { Download, FileWarning, Inbox, ListTree, Loader2, RefreshCw } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/common/Badge";
 import { usePolicies } from "@/hooks/usePolicies";
@@ -95,15 +96,25 @@ function PolicyRow({ policy }: { policy: Policy }) {
         )}
       </div>
 
-      {version && (
-        <a
-          href={policyDownloadUrl(policy.id)}
-          className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-surface-muted hover:text-foreground dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          to={`/clauses/${policy.id}`}
+          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-surface-muted hover:text-foreground dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
         >
-          <Download className="h-3.5 w-3.5" />
-          Download
-        </a>
-      )}
+          <ListTree className="h-3.5 w-3.5" />
+          View clauses
+        </Link>
+
+        {version && (
+          <a
+            href={policyDownloadUrl(policy.id)}
+            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-surface-muted hover:text-foreground dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </a>
+        )}
+      </div>
     </li>
   );
 }

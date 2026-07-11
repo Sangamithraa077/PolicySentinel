@@ -1,10 +1,19 @@
-import { BarChart3, FileText, LayoutDashboard, Settings, ShieldCheck, Upload } from "lucide-react";
+import {
+  BarChart3,
+  FileText,
+  LayoutDashboard,
+  ListTree,
+  Settings,
+  ShieldCheck,
+  Upload,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/policies", label: "Policies", icon: FileText, end: false },
   { to: "/upload", label: "Upload", icon: Upload, end: false },
+  { to: "/clauses", label: "Clauses", icon: ListTree, end: false },
   { to: "/reports", label: "Reports", icon: BarChart3, end: false },
   { to: "/settings", label: "Settings", icon: Settings, end: false },
 ] as const;
