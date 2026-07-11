@@ -11,12 +11,17 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from api.dependencies.policies import get_policy_management_service
-from models.enums import PolicyStatus
-from models.policy import Policy
-from models.policy_version import PolicyVersion
-from schemas.policies import PolicyDetail, PolicyListResponse, PolicySummary, PolicyVersionSummary
-from services.policy_management_service import PolicyManagementService
+from backend.api.dependencies.policies import get_policy_management_service
+from backend.models.enums import PolicyStatus
+from backend.models.policy import Policy
+from backend.models.policy_version import PolicyVersion
+from backend.schemas.policies import (
+    PolicyDetail,
+    PolicyListResponse,
+    PolicySummary,
+    PolicyVersionSummary,
+)
+from backend.services.policy_management_service import PolicyManagementService
 
 router = APIRouter()
 

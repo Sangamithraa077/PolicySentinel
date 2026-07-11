@@ -101,7 +101,11 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
-      - ./backend:/app
+      # Mounted at /app/backend, not /app: every internal import is
+      # package-qualified as `backend.X` (see backend/README.md), which
+      # requires /app on sys.path with backend/ as an actual subdirectory
+      # of it -- matching how docker/backend/Dockerfile lays out the image.
+      - ./backend:/app/backend
       - backend-uploads:/app/uploads
       - backend-logs:/app/logs
     depends_on:

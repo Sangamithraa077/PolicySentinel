@@ -9,13 +9,13 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.base import Base
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.clause_regulatory_mapping import ClauseRegulatoryMapping
-    from models.finding import Finding
-    from models.regulatory_framework import RegulatoryFramework
+    from backend.models.clause_regulatory_mapping import ClauseRegulatoryMapping
+    from backend.models.finding import Finding
+    from backend.models.regulatory_framework import RegulatoryFramework
 
 
 class RegulatoryClause(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

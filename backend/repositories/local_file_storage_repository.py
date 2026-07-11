@@ -19,7 +19,7 @@ import os
 import stat
 from pathlib import Path
 
-from domain.interfaces.file_storage_interface import FileStorageInterface
+from backend.domain.interfaces.file_storage_interface import FileStorageInterface
 
 _DIR_MODE = stat.S_IRWXU  # 0o700
 _FILE_MODE = stat.S_IRUSR | stat.S_IWUSR  # 0o600

@@ -36,8 +36,8 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from domain.exceptions.file_storage_exceptions import FileStorageError
-from domain.interfaces.file_storage_interface import FileStorageInterface
+from backend.domain.exceptions.file_storage_exceptions import FileStorageError
+from backend.domain.interfaces.file_storage_interface import FileStorageInterface
 
 _MAX_FILENAME_ATTEMPTS = 5
 

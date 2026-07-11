@@ -11,12 +11,15 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.health import router as health_router
-from api.v1.router import api_router
-from config.settings import get_settings
-from core.exceptions import catch_unhandled_exceptions_middleware, register_exception_handlers
-from core.lifespan import lifespan
-from core.logging import configure_logging
+from backend.api.health import router as health_router
+from backend.api.v1.router import api_router
+from backend.config.settings import get_settings
+from backend.core.exceptions import (
+    catch_unhandled_exceptions_middleware,
+    register_exception_handlers,
+)
+from backend.core.lifespan import lifespan
+from backend.core.logging import configure_logging
 
 settings = get_settings()
 configure_logging(settings)

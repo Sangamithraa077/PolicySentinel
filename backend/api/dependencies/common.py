@@ -5,7 +5,7 @@ this module (overridable via app.dependency_overrides in tests) rather
 than importing the settings loader directly.
 """
 
-from config.settings import Settings, get_settings
+from backend.config.settings import Settings, get_settings
 
 
 def get_app_settings() -> Settings:

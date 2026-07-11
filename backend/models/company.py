@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.base import Base
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.audit_log import AuditLog
-    from models.department import Department
-    from models.finding import Finding
-    from models.policy import Policy
-    from models.user import User
+    from backend.models.audit_log import AuditLog
+    from backend.models.department import Department
+    from backend.models.finding import Finding
+    from backend.models.policy import Policy
+    from backend.models.user import User
 
 
 class Company(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

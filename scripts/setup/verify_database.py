@@ -32,9 +32,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-BACKEND_DIR = Path(__file__).resolve().parents[2] / "backend"
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
+# Running as a plain script (not a package), so make the `backend` package
+# importable the same way `alembic` and `backend.main:app` already assume —
+# rooted at the repo root.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from alembic.config import Config  # noqa: E402
 from alembic.runtime.migration import MigrationContext  # noqa: E402
@@ -44,19 +48,19 @@ from sqlalchemy.engine import Inspector  # noqa: E402
 from sqlalchemy.exc import SQLAlchemyError  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-import models  # noqa: E402,F401 -- import populates Base.metadata as a side effect
-from database.base import Base  # noqa: E402
-from database.session import SessionLocal, engine  # noqa: E402
-from models.clause import Clause  # noqa: E402
-from models.company import Company  # noqa: E402
-from models.department import Department  # noqa: E402
-from models.finding import Finding  # noqa: E402
-from models.obligation import Obligation  # noqa: E402
-from models.policy import Policy  # noqa: E402
-from models.policy_version import PolicyVersion  # noqa: E402
-from models.regulatory_clause import RegulatoryClause  # noqa: E402
-from models.regulatory_framework import RegulatoryFramework  # noqa: E402
-from models.user import User  # noqa: E402
+import backend.models  # noqa: E402,F401 -- import populates Base.metadata as a side effect
+from backend.database.base import Base  # noqa: E402
+from backend.database.session import SessionLocal, engine  # noqa: E402
+from backend.models.clause import Clause  # noqa: E402
+from backend.models.company import Company  # noqa: E402
+from backend.models.department import Department  # noqa: E402
+from backend.models.finding import Finding  # noqa: E402
+from backend.models.obligation import Obligation  # noqa: E402
+from backend.models.policy import Policy  # noqa: E402
+from backend.models.policy_version import PolicyVersion  # noqa: E402
+from backend.models.regulatory_clause import RegulatoryClause  # noqa: E402
+from backend.models.regulatory_framework import RegulatoryFramework  # noqa: E402
+from backend.models.user import User  # noqa: E402
 
 Status = Literal["PASS", "WARN", "FAIL", "SKIP"]
 _SEVERITY: dict[Status, int] = {"PASS": 0, "SKIP": 1, "WARN": 2, "FAIL": 3}

@@ -9,7 +9,7 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from database.session import engine
+from backend.database.session import engine
 
 logger = logging.getLogger(__name__)
 

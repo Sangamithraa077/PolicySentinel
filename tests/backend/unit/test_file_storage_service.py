@@ -10,9 +10,9 @@ import uuid
 
 import pytest
 
-from domain.exceptions.file_storage_exceptions import FileStorageError
-from domain.interfaces.file_storage_interface import FileStorageInterface
-from services.file_storage_service import FileStorageService
+from backend.domain.exceptions.file_storage_exceptions import FileStorageError
+from backend.domain.interfaces.file_storage_interface import FileStorageInterface
+from backend.services.file_storage_service import FileStorageService
 
 
 class InMemoryFileStorage(FileStorageInterface):

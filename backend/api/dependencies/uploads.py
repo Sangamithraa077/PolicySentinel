@@ -6,14 +6,14 @@ from pathlib import Path
 
 from fastapi import Depends
 
-from api.dependencies.common import get_app_settings
-from api.dependencies.database import DbSession
-from config.settings import Settings
-from domain.interfaces.file_storage_interface import FileStorageInterface
-from repositories.local_file_storage_repository import LocalFileStorageRepository
-from services.file_storage_service import FileStorageService
-from services.persist_policy_upload_service import PersistPolicyUploadService
-from services.validate_policy_document_service import ValidatePolicyDocumentService
+from backend.api.dependencies.common import get_app_settings
+from backend.api.dependencies.database import DbSession
+from backend.config.settings import Settings
+from backend.domain.interfaces.file_storage_interface import FileStorageInterface
+from backend.repositories.local_file_storage_repository import LocalFileStorageRepository
+from backend.services.file_storage_service import FileStorageService
+from backend.services.persist_policy_upload_service import PersistPolicyUploadService
+from backend.services.validate_policy_document_service import ValidatePolicyDocumentService
 
 
 def get_file_storage(settings: Settings = Depends(get_app_settings)) -> FileStorageInterface:

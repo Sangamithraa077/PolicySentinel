@@ -12,14 +12,14 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import DATE, TIMESTAMP
 
-from database.base import Base
-from models.enums import PolicyDocumentFileType, PolicyVersionStatus, pg_enum
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.enums import PolicyDocumentFileType, PolicyVersionStatus, pg_enum
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.clause import Clause
-    from models.policy import Policy
-    from models.user import User
+    from backend.models.clause import Clause
+    from backend.models.policy import Policy
+    from backend.models.user import User
 
 
 class PolicyVersion(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

@@ -21,7 +21,7 @@ from pathlib import Path
 
 from fastapi import UploadFile
 
-from domain.exceptions.upload_exceptions import (
+from backend.domain.exceptions.upload_exceptions import (
     FileTooLargeError,
     InvalidFileContentError,
     UnsupportedFileTypeError,

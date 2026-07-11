@@ -12,12 +12,12 @@ models, not just whichever one happened to be imported first.
 
 from logging.config import fileConfig
 
+import backend.models  # noqa: F401 -- import populates Base.metadata as a side effect
+from backend.config.settings import get_settings
+from backend.database.base import Base
 from sqlalchemy import engine_from_config, pool
 
-import models  # noqa: F401 -- import populates Base.metadata as a side effect
 from alembic import context
-from config.settings import get_settings
-from database.base import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

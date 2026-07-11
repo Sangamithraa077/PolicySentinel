@@ -10,13 +10,13 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.base import Base
-from models.enums import FindingClauseRole, pg_enum
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.enums import FindingClauseRole, pg_enum
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.clause import Clause
-    from models.finding import Finding
+    from backend.models.clause import Clause
+    from backend.models.finding import Finding
 
 
 class FindingClauseLink(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

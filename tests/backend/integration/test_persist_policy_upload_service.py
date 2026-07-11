@@ -12,13 +12,13 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from domain.exceptions.policy_exceptions import CompanyNotFoundError, UserNotFoundError
-from models.enums import PolicyDocumentFileType, PolicyStatus, PolicyVersionStatus
-from models.policy import Policy
-from models.policy_version import PolicyVersion
-from services.file_storage_service import FileStorageService
-from services.persist_policy_upload_service import PersistPolicyUploadService
-from services.validate_policy_document_service import ValidatedPolicyDocument
+from backend.domain.exceptions.policy_exceptions import CompanyNotFoundError, UserNotFoundError
+from backend.models.enums import PolicyDocumentFileType, PolicyStatus, PolicyVersionStatus
+from backend.models.policy import Policy
+from backend.models.policy_version import PolicyVersion
+from backend.services.file_storage_service import FileStorageService
+from backend.services.persist_policy_upload_service import PersistPolicyUploadService
+from backend.services.validate_policy_document_service import ValidatedPolicyDocument
 
 
 def _validated_txt(content: bytes = b"policy body text") -> ValidatedPolicyDocument:

@@ -23,13 +23,13 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TIMESTAMP
 
-from database.base import Base
-from models.enums import AuditAction, AuditableEntityType, pg_enum
-from models.mixins import UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.enums import AuditableEntityType, AuditAction, pg_enum
+from backend.models.mixins import UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.company import Company
-    from models.user import User
+    from backend.models.company import Company
+    from backend.models.user import User
 
 
 class AuditLog(UUIDPrimaryKeyMixin, Base):

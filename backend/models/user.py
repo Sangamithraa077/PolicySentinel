@@ -11,17 +11,17 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TIMESTAMP
 
-from database.base import Base
-from models.enums import UserRole, pg_enum
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.enums import UserRole, pg_enum
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.audit_log import AuditLog
-    from models.clause_regulatory_mapping import ClauseRegulatoryMapping
-    from models.company import Company
-    from models.department import Department
-    from models.finding import Finding
-    from models.policy_version import PolicyVersion
+    from backend.models.audit_log import AuditLog
+    from backend.models.clause_regulatory_mapping import ClauseRegulatoryMapping
+    from backend.models.company import Company
+    from backend.models.department import Department
+    from backend.models.finding import Finding
+    from backend.models.policy_version import PolicyVersion
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

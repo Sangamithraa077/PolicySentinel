@@ -15,13 +15,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 
-from api.dependencies.uploads import (
+from backend.api.dependencies.uploads import (
     get_persist_policy_upload_service,
     get_validate_policy_document_service,
 )
-from schemas.uploads import PolicyDocumentUploadResponse
-from services.persist_policy_upload_service import PersistPolicyUploadService
-from services.validate_policy_document_service import ValidatePolicyDocumentService
+from backend.schemas.uploads import PolicyDocumentUploadResponse
+from backend.services.persist_policy_upload_service import PersistPolicyUploadService
+from backend.services.validate_policy_document_service import ValidatePolicyDocumentService
 
 router = APIRouter()
 

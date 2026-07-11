@@ -27,15 +27,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-BACKEND_DIR = Path(__file__).resolve().parents[2] / "backend"
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # The app resolves relative paths (logs/, uploads/) against its cwd, same
-# as when run normally via `uvicorn main:app` from backend/ (or the
-# container's WORKDIR). Match that so tests don't scatter a stray logs/
-# directory at the repo root.
-os.chdir(BACKEND_DIR)
+# as when run normally via `uvicorn backend.main:app` from the repo root
+# (or the container's WORKDIR). Match that so tests don't scatter a stray
+# logs/ directory somewhere else.
+os.chdir(REPO_ROOT)
 
 # Keep every test file comfortably under this so "file too large" is the
 # only test that needs to actually build an oversized payload.
@@ -59,7 +60,7 @@ def _apply_schema(admin_uri: str, dbname: str, port: int) -> None:
     from alembic import command
     from alembic.config import Config
 
-    from config.settings import get_settings
+    from backend.config.settings import get_settings
 
     admin_conn = psycopg2.connect(admin_uri)
     admin_conn.autocommit = True
@@ -154,18 +155,21 @@ def upload_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def file_storage_service(upload_dir: Path) -> Any:
-    from repositories.local_file_storage_repository import LocalFileStorageRepository
-    from services.file_storage_service import FileStorageService
+    from backend.repositories.local_file_storage_repository import LocalFileStorageRepository
+    from backend.services.file_storage_service import FileStorageService
 
     return FileStorageService(LocalFileStorageRepository(upload_dir))
 
 
 @pytest.fixture
 def client(db_session: Session, file_storage_service: Any) -> Generator[TestClient, None, None]:
-    from api.dependencies.database import get_db
-    from api.dependencies.uploads import get_file_storage_service, get_validate_policy_document_service
-    from main import app
-    from services.validate_policy_document_service import ValidatePolicyDocumentService
+    from backend.api.dependencies.database import get_db
+    from backend.api.dependencies.uploads import (
+        get_file_storage_service,
+        get_validate_policy_document_service,
+    )
+    from backend.main import app
+    from backend.services.validate_policy_document_service import ValidatePolicyDocumentService
 
     def override_get_db() -> Generator[Session, None, None]:
         yield db_session
@@ -194,9 +198,9 @@ def seeded_company_and_user(db_session: Session) -> Any:
     seed data so tests never collide with each other."""
     import bcrypt
 
-    from models.company import Company
-    from models.enums import UserRole
-    from models.user import User
+    from backend.models.company import Company
+    from backend.models.enums import UserRole
+    from backend.models.user import User
 
     unique = uuid.uuid4().hex[:8]
     company = Company(

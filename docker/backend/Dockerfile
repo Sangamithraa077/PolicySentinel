@@ -4,7 +4,11 @@
 # Build context is the REPO ROOT (see docker-compose.yml: context: .),
 # so all COPY paths below are prefixed with backend/.
 #
-# Runs `main:app` from backend/main.py (FastAPI bootstrap — see backend/README.md).
+# Preserves backend/ as an actual subdirectory of WORKDIR (COPY backend/
+# backend/, not COPY backend/ .) and runs `backend.main:app` from it —
+# every internal import in backend/ is package-qualified as `backend.X`
+# (see backend/README.md), which requires /app (the parent of /app/backend)
+# on sys.path, not /app/backend itself.
 #
 # Build targets:
 #   development — hot-reload dev server, source mounted as a bind volume
@@ -51,14 +55,14 @@ ENV PATH="/opt/venv/bin:$PATH" \
 
 # Source is bind-mounted by docker-compose.yml for live reload; COPY here
 # only covers the initial build so the image is runnable standalone.
-COPY backend/ .
+COPY backend/ backend/
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # ---------------------------------------------------------------------------
 # production: immutable image, no reload, non-root user
@@ -69,7 +73,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     APP_ENV=production
 
 COPY --from=dependencies /opt/venv /opt/venv
-COPY backend/ .
+COPY backend/ backend/
 
 RUN useradd --create-home --uid 1000 appuser \
     && chown -R appuser:appuser /app
@@ -81,4 +85,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Worker count/binding to be tuned at deploy time.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

@@ -10,12 +10,12 @@ import io
 import pytest
 from starlette.datastructures import Headers, UploadFile
 
-from domain.exceptions.upload_exceptions import (
+from backend.domain.exceptions.upload_exceptions import (
     FileTooLargeError,
     InvalidFileContentError,
     UnsupportedFileTypeError,
 )
-from services.validate_policy_document_service import ValidatePolicyDocumentService
+from backend.services.validate_policy_document_service import ValidatePolicyDocumentService
 
 pytestmark = pytest.mark.asyncio
 

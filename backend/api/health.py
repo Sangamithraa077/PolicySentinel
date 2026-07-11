@@ -14,9 +14,9 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Response, status
 
-from api.dependencies.common import get_app_settings
-from config.settings import Settings
-from database.health import check_database_connection
+from backend.api.dependencies.common import get_app_settings
+from backend.config.settings import Settings
+from backend.database.health import check_database_connection
 
 router = APIRouter()
 

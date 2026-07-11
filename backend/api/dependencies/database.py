@@ -13,7 +13,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from database.session import get_db_session
+from backend.database.session import get_db_session
 
 
 def get_db() -> Generator[Session, None, None]:

@@ -8,11 +8,11 @@ from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import DATE
 
-from database.base import Base
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.regulatory_clause import RegulatoryClause
+    from backend.models.regulatory_clause import RegulatoryClause
 
 
 class RegulatoryFramework(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

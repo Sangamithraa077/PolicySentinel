@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from repositories.local_file_storage_repository import LocalFileStorageRepository
+from backend.repositories.local_file_storage_repository import LocalFileStorageRepository
 
 _IS_WINDOWS = sys.platform.startswith("win")
 

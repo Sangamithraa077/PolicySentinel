@@ -32,30 +32,30 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-# Running as a plain script (not a package), so make backend/'s modules
-# importable the same way `alembic` and `main:app` already assume —
-# rooted at backend/, not the repo root.
-BACKEND_DIR = Path(__file__).resolve().parents[2] / "backend"
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
+# Running as a plain script (not a package), so make the `backend` package
+# importable the same way `alembic` and `backend.main:app` already assume —
+# rooted at the repo root.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import bcrypt  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from database.session import SessionLocal  # noqa: E402
-from models.company import Company  # noqa: E402
-from models.department import Department  # noqa: E402
-from models.enums import (  # noqa: E402
+from backend.database.session import SessionLocal  # noqa: E402
+from backend.models.company import Company  # noqa: E402
+from backend.models.department import Department  # noqa: E402
+from backend.models.enums import (  # noqa: E402
     PolicyDocumentFileType,
     PolicyStatus,
     PolicyVersionStatus,
     UserRole,
 )
-from models.policy import Policy  # noqa: E402
-from models.policy_version import PolicyVersion  # noqa: E402
-from models.regulatory_clause import RegulatoryClause  # noqa: E402
-from models.regulatory_framework import RegulatoryFramework  # noqa: E402
-from models.user import User  # noqa: E402
+from backend.models.policy import Policy  # noqa: E402
+from backend.models.policy_version import PolicyVersion  # noqa: E402
+from backend.models.regulatory_clause import RegulatoryClause  # noqa: E402
+from backend.models.regulatory_framework import RegulatoryFramework  # noqa: E402
+from backend.models.user import User  # noqa: E402
 
 # Dev-only shared password for every seeded user. This has no bearing on
 # any production path — there is no seed data outside a local/dev

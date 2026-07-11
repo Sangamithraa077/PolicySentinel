@@ -8,13 +8,18 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.base import Base
-from models.enums import ObligationDeadlineType, ObligationPriority, ObligationStatus, pg_enum
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.enums import (
+    ObligationDeadlineType,
+    ObligationPriority,
+    ObligationStatus,
+    pg_enum,
+)
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.clause import Clause
-    from models.department import Department
+    from backend.models.clause import Clause
+    from backend.models.department import Department
 
 
 class Obligation(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

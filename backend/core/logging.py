@@ -7,7 +7,7 @@ Called once at process startup, before the FastAPI app is constructed.
 import logging.config
 import os
 
-from config.settings import Settings
+from backend.config.settings import Settings
 
 
 def configure_logging(settings: Settings) -> None:

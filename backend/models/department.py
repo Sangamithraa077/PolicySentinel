@@ -9,14 +9,14 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.base import Base
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.company import Company
-    from models.obligation import Obligation
-    from models.policy import Policy
-    from models.user import User
+    from backend.models.company import Company
+    from backend.models.obligation import Obligation
+    from backend.models.policy import Policy
+    from backend.models.user import User
 
 
 class Department(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

@@ -12,14 +12,14 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TIMESTAMP
 
-from database.base import Base
-from models.enums import MappingType, pg_enum
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.enums import MappingType, pg_enum
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.clause import Clause
-    from models.regulatory_clause import RegulatoryClause
-    from models.user import User
+    from backend.models.clause import Clause
+    from backend.models.regulatory_clause import RegulatoryClause
+    from backend.models.user import User
 
 
 class ClauseRegulatoryMapping(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

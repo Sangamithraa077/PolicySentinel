@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from database.session import engine
+from backend.database.session import engine
 
 logger = logging.getLogger(__name__)
 

@@ -35,6 +35,12 @@ backend/logs/*
 !backend/logs/.gitkeep
 !backend/logs/README.md
 
+# config/settings.py's LOG_FILE_PATH/UPLOAD_DIR are relative to the
+# process's cwd. Running `uvicorn backend.main:app` from the repo root
+# (see backend/README.md) creates these here instead of under backend/.
+/logs/
+/uploads/
+
 # --- Databases ---
 *.db
 postgres-data/

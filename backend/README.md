@@ -7,7 +7,7 @@ Python/FastAPI backend for PolicySentinel. Organized into four Clean Architectur
 | **Presentation** | `api/`, `middleware/` |
 | **Application** | `services/`, `schemas/` |
 | **Domain** | `domain/` (entities, interfaces, exceptions) |
-| **Infrastructure** | `database/`, `models/`, `repositories/`, `ai/`, `graph/`, `reasoning/`, `auth/` |
+| **Infrastructure** | `database/`, `models/`, `repositories/`, `ai/`, `graph/`, `reasoning/`, `auth/`, `parsing/` |
 
 Cross-cutting: `core/`, `config/`, `utils/`, `uploads/`, `logs/`.
 
@@ -22,13 +22,16 @@ The application **foundation** is implemented: `main.py`, `config/` (settings), 
 
 Requires Python 3.11 (see `.python-version`).
 
+Every internal import in `backend/` is package-qualified (e.g. `from backend.config.settings import ...`), so `backend` must be run as a package with the **repo root** — not `backend/` itself — on `sys.path`. In practice that just means: install dependencies from inside `backend/`, but run `uvicorn` from the repo root, one level up.
+
 ```bash
 cd backend
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 pip install -r requirements.txt
-copy ..\.env.example ..\.env  # then fill in real values
-uvicorn main:app --reload
+cd ..
+copy .env.example .env        # then fill in real values
+uvicorn backend.main:app --reload
 ```
 
 Visit `http://localhost:8000/health` and `http://localhost:8000/api/v1/`.

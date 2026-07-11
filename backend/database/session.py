@@ -17,7 +17,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from config.settings import get_settings
+from backend.config.settings import get_settings
 
 settings = get_settings()
 

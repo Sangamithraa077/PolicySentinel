@@ -29,14 +29,14 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from domain.exceptions.policy_exceptions import CompanyNotFoundError, UserNotFoundError
-from models.company import Company
-from models.enums import PolicyDocumentFileType, PolicyStatus, PolicyVersionStatus
-from models.policy import Policy
-from models.policy_version import PolicyVersion
-from models.user import User
-from services.file_storage_service import FileStorageService, StoredFile
-from services.validate_policy_document_service import ValidatedPolicyDocument
+from backend.domain.exceptions.policy_exceptions import CompanyNotFoundError, UserNotFoundError
+from backend.models.company import Company
+from backend.models.enums import PolicyDocumentFileType, PolicyStatus, PolicyVersionStatus
+from backend.models.policy import Policy
+from backend.models.policy_version import PolicyVersion
+from backend.models.user import User
+from backend.services.file_storage_service import FileStorageService, StoredFile
+from backend.services.validate_policy_document_service import ValidatedPolicyDocument
 
 _EXTENSION_TO_FILE_TYPE: dict[str, PolicyDocumentFileType] = {
     ".txt": PolicyDocumentFileType.TXT,
