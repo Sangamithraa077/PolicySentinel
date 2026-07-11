@@ -1,6 +1,6 @@
 import type { AxiosProgressEvent } from "axios";
 
-import { apiClient } from "@/services/apiClient";
+import { API_BASE_URL, apiClient } from "@/services/apiClient";
 import type { PolicyDocumentUploadResponse, PolicyListResponse } from "@/types/policy";
 
 export interface UploadPolicyDocumentParams {
@@ -60,5 +60,5 @@ export async function listPolicies(params: ListPoliciesParams = {}): Promise<Pol
  * handle the Content-Disposition response itself; no need to route this
  * one through axios. */
 export function policyDownloadUrl(policyId: string): string {
-  return `${import.meta.env.VITE_API_BASE_URL}/policies/${policyId}/download`;
+  return `${API_BASE_URL}/policies/${policyId}/download`;
 }

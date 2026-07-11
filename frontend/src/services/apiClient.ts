@@ -1,6 +1,22 @@
 import axios from "axios";
 
 /**
+ * The one place `VITE_API_BASE_URL` is read. Every other file that needs
+ * the backend's base URL (e.g. policyService.ts's direct-download link,
+ * which can't go through `apiClient` since it's a plain <a href>, not an
+ * axios request) must import this constant rather than reading
+ * `import.meta.env.VITE_API_BASE_URL` itself — one shared source avoids
+ * the base URL (and any future host/protocol change) drifting out of
+ * sync between files.
+ *
+ * Includes the API version prefix (e.g. `http://localhost:8000/api/v1`,
+ * see .env.example) — every backend route is mounted under
+ * `settings.API_V1_PREFIX` (see backend/main.py), so callers append only
+ * the resource path (`/policies`, `/clauses`, ...), never `/api/v1` again.
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+/**
  * Shared Axios instance for all backend REST calls. Feature-specific
  * services (e.g. policyService.ts) should import and use this instance
  * rather than calling axios directly, so base URL, headers, and
@@ -15,7 +31,7 @@ import axios from "axios";
  * server couldn't parse the body.
  */
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
 });
 
 // Extension point (not implemented): request interceptor to attach an auth
