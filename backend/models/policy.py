@@ -17,14 +17,15 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.base import Base
-from models.enums import PolicyStatus, pg_enum
-from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.database.base import Base
+from backend.models.enums import PolicyStatus, pg_enum
+from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from models.company import Company
-    from models.department import Department
-    from models.policy_version import PolicyVersion
+    from backend.models.clause import Clause
+    from backend.models.company import Company
+    from backend.models.department import Department
+    from backend.models.policy_version import PolicyVersion
 
 
 class Policy(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -64,3 +65,4 @@ class Policy(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         foreign_keys="[Policy.current_version_id]",
         post_update=True,
     )
+    clauses: Mapped[List["Clause"]] = relationship("Clause", back_populates="policy")

@@ -10,13 +10,17 @@ import uuid
 import pytest
 from sqlalchemy.orm import Session
 
-from domain.exceptions.policy_exceptions import PolicyNotFoundError, PolicyVersionNotFoundError
-from models.policy import Policy
-from models.policy_version import PolicyVersion
-from services.file_storage_service import FileStorageService
-from services.persist_policy_upload_service import PersistPolicyUploadService
-from services.policy_management_service import PolicyManagementService
-from services.validate_policy_document_service import ValidatedPolicyDocument
+from backend.domain.exceptions.policy_exceptions import PolicyNotFoundError, PolicyVersionNotFoundError
+from backend.models.clause import Clause
+from backend.models.policy import Policy
+from backend.models.policy_version import PolicyVersion
+from backend.repositories.clause_repository import ClauseRepository
+from backend.services.clause_segmentation_service import ClauseSegmentationService
+from backend.services.file_storage_service import FileStorageService
+from backend.services.persist_policy_upload_service import PersistPolicyUploadService
+from backend.services.policy_management_service import PolicyManagementService
+from backend.services.store_segmented_clauses_service import StoreSegmentedClausesService
+from backend.services.validate_policy_document_service import ValidatedPolicyDocument
 
 
 def _upload_a_policy(
@@ -47,6 +51,12 @@ def _upload_a_policy(
     return result.policy_id
 
 
+def _make_service(
+    db_session: Session, file_storage_service: FileStorageService
+) -> PolicyManagementService:
+    return PolicyManagementService(db_session, file_storage_service, ClauseRepository(db_session))
+
+
 @pytest.mark.file_retrieval
 def test_list_policies_returns_only_non_deleted_policies_for_the_company(
     db_session: Session, file_storage_service: FileStorageService, seeded_company_and_user
@@ -57,7 +67,7 @@ def test_list_policies_returns_only_non_deleted_policies_for_the_company(
     deleted_policy_id = _upload_a_policy(
         db_session, file_storage_service, seeded_company_and_user, title="Policy C (deleted)"
     )
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
     service.delete_policy(deleted_policy_id)
 
     items, total = service.list_policies(company_id=company.id)
@@ -73,7 +83,7 @@ def test_get_policy_returns_details_and_versions(
     policy_id = _upload_a_policy(
         db_session, file_storage_service, seeded_company_and_user, title="Data Handling Policy"
     )
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
 
     policy, versions = service.get_policy(policy_id)
 
@@ -86,7 +96,7 @@ def test_get_policy_returns_details_and_versions(
 def test_get_policy_raises_not_found_for_unknown_id(
     db_session: Session, file_storage_service: FileStorageService
 ) -> None:
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
 
     with pytest.raises(PolicyNotFoundError):
         service.get_policy(uuid.uuid4())
@@ -103,7 +113,7 @@ def test_get_download_returns_the_original_bytes_and_filename(
         title="Incident Response Policy",
         content=b"specific bytes to verify",
     )
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
 
     download = service.get_download(policy_id)
 
@@ -116,7 +126,7 @@ def test_get_download_returns_the_original_bytes_and_filename(
 def test_get_download_raises_policy_not_found_for_unknown_id(
     db_session: Session, file_storage_service: FileStorageService
 ) -> None:
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
 
     with pytest.raises(PolicyNotFoundError):
         service.get_download(uuid.uuid4())
@@ -129,7 +139,7 @@ def test_get_download_raises_version_not_found_for_unknown_version_number(
     policy_id = _upload_a_policy(
         db_session, file_storage_service, seeded_company_and_user, title="Vendor Risk Policy"
     )
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
 
     with pytest.raises(PolicyVersionNotFoundError):
         service.get_download(policy_id, version_number=99)
@@ -142,7 +152,7 @@ def test_delete_policy_soft_deletes_policy_and_its_versions(
     policy_id = _upload_a_policy(
         db_session, file_storage_service, seeded_company_and_user, title="Retiring Policy"
     )
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
 
     service.delete_policy(policy_id)
 
@@ -166,7 +176,7 @@ def test_delete_policy_leaves_the_underlying_file_on_disk(
     policy_id = _upload_a_policy(
         db_session, file_storage_service, seeded_company_and_user, title="Policy To Soft Delete"
     )
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
     db_session.expire_all()
     version = (
         db_session.query(PolicyVersion).filter(PolicyVersion.policy_id == policy_id).one()
@@ -182,7 +192,30 @@ def test_delete_policy_leaves_the_underlying_file_on_disk(
 def test_delete_policy_raises_not_found_for_unknown_id(
     db_session: Session, file_storage_service: FileStorageService
 ) -> None:
-    service = PolicyManagementService(db_session, file_storage_service)
+    service = _make_service(db_session, file_storage_service)
 
     with pytest.raises(PolicyNotFoundError):
         service.delete_policy(uuid.uuid4())
+
+
+@pytest.mark.file_deletion
+def test_delete_policy_soft_deletes_the_clauses_of_its_removed_version(
+    db_session: Session, file_storage_service: FileStorageService, seeded_company_and_user
+) -> None:
+    policy_id = _upload_a_policy(
+        db_session, file_storage_service, seeded_company_and_user, title="Policy With Clauses"
+    )
+    version = db_session.query(PolicyVersion).filter(PolicyVersion.policy_id == policy_id).one()
+    clauses = ClauseSegmentationService().segment("1. Introduction\n\nBody text.")
+    StoreSegmentedClausesService(ClauseRepository(db_session)).store(
+        clauses, policy_id=policy_id, policy_version_id=version.id
+    )
+    service = _make_service(db_session, file_storage_service)
+
+    service.delete_policy(policy_id)
+
+    db_session.expire_all()
+    stored_clause = db_session.get(Clause, clauses[0].id)
+    assert stored_clause is not None
+    assert stored_clause.deleted_at is not None
+    assert ClauseRepository(db_session).list_for_policy_version(version.id) == []

@@ -2,20 +2,21 @@
 
 Feature routers are registered here as they are implemented, e.g.:
 
-    from api.v1.endpoints import policies
+    from backend.api.v1.endpoints import policies
     api_router.include_router(policies.router, prefix="/policies", tags=["Policies"])
 """
 
 from fastapi import APIRouter, Depends
 
-from api.dependencies.common import get_app_settings
-from api.v1.endpoints import policies, uploads
-from config.settings import Settings
+from backend.api.dependencies.common import get_app_settings
+from backend.api.v1.endpoints import clauses, policies, uploads
+from backend.config.settings import Settings
 
 api_router = APIRouter()
 
 api_router.include_router(policies.router, prefix="/policies", tags=["Policies"])
 api_router.include_router(uploads.router, prefix="/uploads", tags=["Uploads"])
+api_router.include_router(clauses.router, prefix="/clauses", tags=["Clauses"])
 
 
 @api_router.get("/", tags=["Meta"], summary="API version metadata")

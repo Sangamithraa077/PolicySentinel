@@ -60,6 +60,7 @@ class ClauseType(str, enum.Enum):
 class ExtractionMethod(str, enum.Enum):
     AI = "ai"
     MANUAL = "manual"
+    RULE_BASED = "rule_based"
 
 
 class ObligationDeadlineType(str, enum.Enum):

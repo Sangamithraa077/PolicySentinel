@@ -17,14 +17,16 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from domain.exceptions.file_storage_exceptions import FileStorageError
-from domain.exceptions.policy_exceptions import (
+from backend.domain.exceptions.clause_exceptions import ClauseNotFoundError, ClauseStorageError
+from backend.domain.exceptions.file_storage_exceptions import FileStorageError
+from backend.domain.exceptions.parsing_exceptions import DocumentParsingError
+from backend.domain.exceptions.policy_exceptions import (
     CompanyNotFoundError,
     PolicyNotFoundError,
     PolicyVersionNotFoundError,
     UserNotFoundError,
 )
-from domain.exceptions.upload_exceptions import (
+from backend.domain.exceptions.upload_exceptions import (
     FileTooLargeError,
     InvalidFileContentError,
     UnsupportedFileTypeError,
@@ -170,6 +172,23 @@ async def file_storage_error_handler(request: Request, exc: FileStorageError) ->
     return _error_response(status.HTTP_500_INTERNAL_SERVER_ERROR, "file_storage_error", str(exc))
 
 
+async def document_parsing_error_handler(
+    request: Request, exc: DocumentParsingError
+) -> JSONResponse:
+    return _error_response(
+        status.HTTP_422_UNPROCESSABLE_ENTITY, "document_parsing_failed", str(exc)
+    )
+
+
+async def clause_storage_error_handler(request: Request, exc: ClauseStorageError) -> JSONResponse:
+    logger.error("Clause storage error: %s", exc)
+    return _error_response(status.HTTP_500_INTERNAL_SERVER_ERROR, "clause_storage_error", str(exc))
+
+
+async def clause_not_found_handler(request: Request, exc: ClauseNotFoundError) -> JSONResponse:
+    return _error_response(status.HTTP_404_NOT_FOUND, "clause_not_found", str(exc))
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppException, app_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
@@ -182,6 +201,9 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(PolicyNotFoundError, policy_not_found_handler)
     app.add_exception_handler(PolicyVersionNotFoundError, policy_version_not_found_handler)
     app.add_exception_handler(FileStorageError, file_storage_error_handler)
+    app.add_exception_handler(DocumentParsingError, document_parsing_error_handler)
+    app.add_exception_handler(ClauseStorageError, clause_storage_error_handler)
+    app.add_exception_handler(ClauseNotFoundError, clause_not_found_handler)
     # No app.add_exception_handler(Exception, ...) here -- see
     # catch_unhandled_exceptions_middleware's docstring for why that
     # specific registration is deliberately avoided.

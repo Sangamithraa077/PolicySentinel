@@ -20,11 +20,15 @@ from datetime import UTC, datetime
 from sqlalchemy import ColumnElement, func, select, update
 from sqlalchemy.orm import Session, selectinload
 
-from domain.exceptions.policy_exceptions import PolicyNotFoundError, PolicyVersionNotFoundError
-from models.enums import PolicyDocumentFileType, PolicyStatus
-from models.policy import Policy
-from models.policy_version import PolicyVersion
-from services.file_storage_service import FileStorageService
+from backend.domain.exceptions.policy_exceptions import (
+    PolicyNotFoundError,
+    PolicyVersionNotFoundError,
+)
+from backend.domain.interfaces.clause_repository_interface import ClauseRepositoryInterface
+from backend.models.enums import PolicyDocumentFileType, PolicyStatus
+from backend.models.policy import Policy
+from backend.models.policy_version import PolicyVersion
+from backend.services.file_storage_service import FileStorageService
 
 _CONTENT_TYPES: dict[PolicyDocumentFileType, str] = {
     PolicyDocumentFileType.TXT: "text/plain",
@@ -44,9 +48,15 @@ class PolicyDownload:
 
 
 class PolicyManagementService:
-    def __init__(self, db: Session, file_storage: FileStorageService) -> None:
+    def __init__(
+        self,
+        db: Session,
+        file_storage: FileStorageService,
+        clause_repository: ClauseRepositoryInterface,
+    ) -> None:
         self._db = db
         self._file_storage = file_storage
+        self._clause_repository = clause_repository
 
     def list_policies(
         self,
@@ -145,13 +155,25 @@ class PolicyManagementService:
     def delete_policy(self, policy_id: uuid.UUID) -> None:
         """Soft-deletes the policy and, for consistency, every one of its
         non-deleted versions — a policy that's gone shouldn't leave
-        versions behind that still look active. The underlying files are
-        left in storage; soft delete means recoverable, not gone."""
+        versions behind that still look active. Removing a version in
+        turn removes its clauses (see
+        `domain/interfaces/clause_repository_interface.py::delete_for_policy_version`),
+        so a deleted policy doesn't leave orphaned, still-visible clauses
+        behind either. The underlying files are left in storage; soft
+        delete means recoverable, not gone."""
         policy = self._db.scalar(
             select(Policy).where(Policy.id == policy_id, Policy.deleted_at.is_(None))
         )
         if policy is None:
             raise PolicyNotFoundError(f"Policy '{policy_id}' does not exist.")
+
+        version_ids = list(
+            self._db.scalars(
+                select(PolicyVersion.id).where(
+                    PolicyVersion.policy_id == policy_id, PolicyVersion.deleted_at.is_(None)
+                )
+            )
+        )
 
         now = datetime.now(UTC)
         policy.deleted_at = now
@@ -160,4 +182,7 @@ class PolicyManagementService:
             .where(PolicyVersion.policy_id == policy_id, PolicyVersion.deleted_at.is_(None))
             .values(deleted_at=now)
         )
+        for version_id in version_ids:
+            self._clause_repository.delete_for_policy_version(version_id)
+
         self._db.commit()
