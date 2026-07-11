@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.health import router as health_router
 from api.v1.router import api_router
 from config.settings import get_settings
-from core.exceptions import register_exception_handlers
+from core.exceptions import catch_unhandled_exceptions_middleware, register_exception_handlers
 from core.lifespan import lifespan
 from core.logging import configure_logging
 
@@ -30,6 +30,13 @@ def create_app() -> FastAPI:
         debug=settings.APP_DEBUG,
         lifespan=lifespan,
     )
+
+    # Registered before CORSMiddleware deliberately: Starlette's add_middleware
+    # prepends, so whichever of these is added *second* ends up outermost.
+    # CORSMiddleware needs to be outermost so it can still attach CORS
+    # headers to the error responses this middleware builds (see
+    # catch_unhandled_exceptions_middleware's docstring).
+    application.middleware("http")(catch_unhandled_exceptions_middleware)
 
     application.add_middleware(
         CORSMiddleware,

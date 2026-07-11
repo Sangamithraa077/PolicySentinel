@@ -10,11 +10,25 @@ No business-rule exceptions live here — those belong in domain/exceptions/.
 """
 
 import logging
+from collections.abc import Awaitable, Callable
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from domain.exceptions.file_storage_exceptions import FileStorageError
+from domain.exceptions.policy_exceptions import (
+    CompanyNotFoundError,
+    PolicyNotFoundError,
+    PolicyVersionNotFoundError,
+    UserNotFoundError,
+)
+from domain.exceptions.upload_exceptions import (
+    FileTooLargeError,
+    InvalidFileContentError,
+    UnsupportedFileTypeError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,15 +103,85 @@ async def validation_exception_handler(
     )
 
 
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.exception("Unhandled exception while processing request")
+async def catch_unhandled_exceptions_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Last-resort catch-all for exceptions no registered handler catches.
+
+    Deliberately middleware, not `add_exception_handler(Exception, ...)`:
+    Starlette pulls a handler registered for the bare `Exception` class
+    out to `ServerErrorMiddleware`, which sits *outside* CORSMiddleware —
+    so a response built that way never gets a CORS header, and a
+    cross-origin caller sees an opaque network error instead of the
+    actual status/body (verified directly: a 500 from that path came
+    back with no `Access-Control-Allow-Origin` at all, while every
+    exception-handler-based 4xx response had one). Catching here as
+    middleware placed inside CORSMiddleware (see main.py's registration
+    order — this one must be added *before* CORSMiddleware) keeps error
+    responses on the same footing as everything else.
+    """
+    try:
+        return await call_next(request)
+    except Exception:
+        logger.exception("Unhandled exception while processing request")
+        return _error_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "internal_error", "An unexpected error occurred"
+        )
+
+
+async def unsupported_file_type_handler(
+    request: Request, exc: UnsupportedFileTypeError
+) -> JSONResponse:
     return _error_response(
-        status.HTTP_500_INTERNAL_SERVER_ERROR, "internal_error", "An unexpected error occurred"
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "unsupported_file_type", str(exc)
     )
+
+
+async def file_too_large_handler(request: Request, exc: FileTooLargeError) -> JSONResponse:
+    return _error_response(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "file_too_large", str(exc))
+
+
+async def invalid_file_content_handler(
+    request: Request, exc: InvalidFileContentError
+) -> JSONResponse:
+    return _error_response(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "invalid_file_content", str(exc))
+
+
+async def company_not_found_handler(request: Request, exc: CompanyNotFoundError) -> JSONResponse:
+    return _error_response(status.HTTP_404_NOT_FOUND, "company_not_found", str(exc))
+
+
+async def user_not_found_handler(request: Request, exc: UserNotFoundError) -> JSONResponse:
+    return _error_response(status.HTTP_404_NOT_FOUND, "user_not_found", str(exc))
+
+
+async def policy_not_found_handler(request: Request, exc: PolicyNotFoundError) -> JSONResponse:
+    return _error_response(status.HTTP_404_NOT_FOUND, "policy_not_found", str(exc))
+
+
+async def policy_version_not_found_handler(
+    request: Request, exc: PolicyVersionNotFoundError
+) -> JSONResponse:
+    return _error_response(status.HTTP_404_NOT_FOUND, "policy_version_not_found", str(exc))
+
+
+async def file_storage_error_handler(request: Request, exc: FileStorageError) -> JSONResponse:
+    logger.error("File storage error: %s", exc)
+    return _error_response(status.HTTP_500_INTERNAL_SERVER_ERROR, "file_storage_error", str(exc))
 
 
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppException, app_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    app.add_exception_handler(Exception, unhandled_exception_handler)
+    app.add_exception_handler(UnsupportedFileTypeError, unsupported_file_type_handler)
+    app.add_exception_handler(FileTooLargeError, file_too_large_handler)
+    app.add_exception_handler(InvalidFileContentError, invalid_file_content_handler)
+    app.add_exception_handler(CompanyNotFoundError, company_not_found_handler)
+    app.add_exception_handler(UserNotFoundError, user_not_found_handler)
+    app.add_exception_handler(PolicyNotFoundError, policy_not_found_handler)
+    app.add_exception_handler(PolicyVersionNotFoundError, policy_version_not_found_handler)
+    app.add_exception_handler(FileStorageError, file_storage_error_handler)
+    # No app.add_exception_handler(Exception, ...) here -- see
+    # catch_unhandled_exceptions_middleware's docstring for why that
+    # specific registration is deliberately avoided.
