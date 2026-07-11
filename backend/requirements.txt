@@ -32,3 +32,4 @@ z3-solver
 pytest
 pytest-asyncio
 httpx
+pgserver
