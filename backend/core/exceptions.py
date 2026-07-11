@@ -60,7 +60,9 @@ class ForbiddenError(AppException):
     error_code = "forbidden"
 
 
-def _error_response(status_code: int, error_code: str, message: str, details: object = None) -> JSONResponse:
+def _error_response(
+    status_code: int, error_code: str, message: str, details: object = None
+) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={"error": {"code": error_code, "message": message, "details": details}},
@@ -76,7 +78,9 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     return _error_response(exc.status_code, "http_error", str(exc.detail))
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     return _error_response(
         status.HTTP_422_UNPROCESSABLE_ENTITY,
         "validation_error",
@@ -87,7 +91,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception("Unhandled exception while processing request")
-    return _error_response(status.HTTP_500_INTERNAL_SERVER_ERROR, "internal_error", "An unexpected error occurred")
+    return _error_response(
+        status.HTTP_500_INTERNAL_SERVER_ERROR, "internal_error", "An unexpected error occurred"
+    )
 
 
 def register_exception_handlers(app: FastAPI) -> None:
