@@ -34,7 +34,16 @@ class Settings(BaseSettings):
     BACKEND_HOST: str = "0.0.0.0"
     BACKEND_PORT: int = 8000
     API_V1_PREFIX: str = "/api/v1"
-    CORS_ALLOWED_ORIGINS: str = "http://localhost:3000"
+    # Comma-separated, parsed by `cors_origins` below. Covers the frontend's
+    # dev server on both its documented port (3000, see docker-compose.yml)
+    # and Vite's actual default (5173, see frontend/vite.config.ts), each
+    # on both localhost and 127.0.0.1 (browsers treat them as distinct
+    # origins), plus 3001 as a fallback when 3000 is already taken.
+    CORS_ALLOWED_ORIGINS: str = (
+        "http://localhost:3000,http://localhost:3001,"
+        "http://127.0.0.1:3000,http://127.0.0.1:3001,"
+        "http://localhost:5173,http://127.0.0.1:5173"
+    )
 
     # --- PostgreSQL ---
     POSTGRES_HOST: str = "localhost"
