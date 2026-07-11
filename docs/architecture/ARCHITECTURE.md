@@ -25,7 +25,7 @@ PolicySentinel follows **Clean Architecture**: dependencies point inward, toward
 ┌───────────────────────────┴────────────────────────────────┐
 │  Infrastructure Layer                                          │
 │  database/  •  models/  •  repositories/  •  ai/  •  graph/   │
-│  reasoning/  •  auth/                                          │
+│  reasoning/  •  auth/  •  parsing/                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 

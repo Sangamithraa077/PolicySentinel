@@ -28,6 +28,10 @@ anthropic
 # --- Formal reasoning ---
 z3-solver
 
+# --- Document parsing ---
+pypdf
+python-docx
+
 # --- Testing ---
 pytest
 pytest-asyncio
