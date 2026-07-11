@@ -1,6 +1,6 @@
 /**
- * Shared TypeScript types, mirroring backend schemas/ as real API
- * contracts are implemented. Placeholder only — no domain types yet.
+ * Shared, cross-feature TypeScript types. Feature-specific domain types
+ * (e.g. Policy) live in their own files here, such as types/policy.ts.
  */
 
 export interface ApiErrorResponse {
