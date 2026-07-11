@@ -1,18 +1,19 @@
 """PolicyVersion — an immutable, uploaded revision of a Policy; the unit that
 gets parsed into Clauses and evaluated for conflict/redundancy/staleness."""
+
 from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import ForeignKey, Text
+from sqlalchemy import ForeignKey, Integer, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import DATE, TIMESTAMP
 
 from database.base import Base
-from models.enums import PolicyVersionStatus, pg_enum
+from models.enums import PolicyDocumentFileType, PolicyVersionStatus, pg_enum
 from models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
@@ -43,9 +44,16 @@ class PolicyVersion(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         PGUUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="SET NULL")
     )
     ai_summary: Mapped[Optional[str]] = mapped_column(Text)
-    uploaded_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
+    uploaded_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+
+    # --- upload metadata (extracted at upload time; see
+    # services/persist_policy_upload_service.py) ---
+    original_filename: Mapped[str] = mapped_column(Text, nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    file_type: Mapped[PolicyDocumentFileType] = mapped_column(
+        pg_enum(PolicyDocumentFileType, "policy_document_file_type"), nullable=False
     )
+    description: Mapped[Optional[str]] = mapped_column(Text)
 
     policy: Mapped["Policy"] = relationship(
         "Policy", foreign_keys="[PolicyVersion.policy_id]", back_populates="versions"
@@ -68,6 +76,4 @@ class PolicyVersion(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         back_populates="superseded_by",
     )
 
-    clauses: Mapped[List["Clause"]] = relationship(
-        "Clause", back_populates="policy_version"
-    )
+    clauses: Mapped[List["Clause"]] = relationship("Clause", back_populates="policy_version")

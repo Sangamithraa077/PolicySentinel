@@ -45,7 +45,12 @@ from sqlalchemy.orm import Session  # noqa: E402
 from database.session import SessionLocal  # noqa: E402
 from models.company import Company  # noqa: E402
 from models.department import Department  # noqa: E402
-from models.enums import PolicyStatus, PolicyVersionStatus, UserRole  # noqa: E402
+from models.enums import (  # noqa: E402
+    PolicyDocumentFileType,
+    PolicyStatus,
+    PolicyVersionStatus,
+    UserRole,
+)
 from models.policy import Policy  # noqa: E402
 from models.policy_version import PolicyVersion  # noqa: E402
 from models.regulatory_clause import RegulatoryClause  # noqa: E402
@@ -253,32 +258,44 @@ def build_seed_objects() -> SeedObjects:
         )
         seed.policies.append(policy)
 
+        v1_filename = f"{code.lower()}-v1.pdf"
+        v1_content = f"Placeholder content for {title} (v1).".encode()
         v1 = PolicyVersion(
             policy=policy,
             version_number=1,
-            source_file_reference=f"uploads/policies/{code.lower()}-v1.pdf",
+            source_file_reference=f"uploads/policies/{v1_filename}",
             file_hash=_fake_file_hash(f"{code}-v1"),
             uploaded_by=uploader,
             status=PolicyVersionStatus.SUPERSEDED,
             effective_date=date.today() - timedelta(days=380),
             ai_summary=f"Initial published version of the {title.lower()}.",
             uploaded_at=_days_ago(380),
+            original_filename=v1_filename,
+            size_bytes=len(v1_content),
+            file_type=PolicyDocumentFileType.PDF,
+            description="Initial upload.",
         )
         v2_status = (
             PolicyVersionStatus.UNDER_REVIEW
             if status == PolicyStatus.DRAFT
             else PolicyVersionStatus.PUBLISHED
         )
+        v2_filename = f"{code.lower()}-v2.pdf"
+        v2_content = f"Placeholder content for {title} (v2).".encode()
         v2 = PolicyVersion(
             policy=policy,
             version_number=2,
-            source_file_reference=f"uploads/policies/{code.lower()}-v2.pdf",
+            source_file_reference=f"uploads/policies/{v2_filename}",
             file_hash=_fake_file_hash(f"{code}-v2"),
             uploaded_by=uploader,
             status=v2_status,
             effective_date=date.today() - timedelta(days=14),
             ai_summary=f"Revised version of the {title.lower()}, incorporating the latest regulatory guidance.",
             uploaded_at=_days_ago(14),
+            original_filename=v2_filename,
+            size_bytes=len(v2_content),
+            file_type=PolicyDocumentFileType.PDF,
+            description="Revised per latest regulatory guidance.",
         )
         v1.superseded_by = v2
         policy.current_version = v2

@@ -7,6 +7,7 @@ deferred `ALTER TABLE` after `policy_versions` is created). `post_update`
 tells SQLAlchemy's unit of work to resolve that cycle with a follow-up
 UPDATE rather than failing to order the INSERTs.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -32,8 +33,11 @@ class Policy(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     company_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("companies.id", ondelete="RESTRICT"), nullable=False
     )
-    owning_department_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("departments.id", ondelete="RESTRICT"), nullable=False
+    # Nullable: a policy created via upload (see
+    # services/persist_policy_upload_service.py) isn't assigned to a
+    # department yet — that happens in a later triage step.
+    owning_department_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("departments.id", ondelete="RESTRICT")
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     policy_code: Mapped[Optional[str]] = mapped_column(Text)
@@ -46,7 +50,7 @@ class Policy(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
 
     company: Mapped["Company"] = relationship("Company", back_populates="policies")
-    owning_department: Mapped["Department"] = relationship(
+    owning_department: Mapped[Optional["Department"]] = relationship(
         "Department", back_populates="policies"
     )
 

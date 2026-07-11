@@ -6,6 +6,7 @@ the types already exist in the database; letting SQLAlchemy attempt to
 `CREATE TYPE` them again (e.g. during test-DB setup via
 `Base.metadata.create_all()`) would fail.
 """
+
 from __future__ import annotations
 
 import enum
@@ -143,3 +144,13 @@ class AuditableEntityType(str, enum.Enum):
     CLAUSE_REGULATORY_MAPPING = "clause_regulatory_mapping"
     FINDING = "finding"
     FINDING_CLAUSE_LINK = "finding_clause_link"
+
+
+class PolicyDocumentFileType(str, enum.Enum):
+    """The uploaded file's format — matches the extensions the upload
+    module accepts (see services/validate_policy_document_service.py)."""
+
+    TXT = "txt"
+    MD = "md"
+    PDF = "pdf"
+    DOCX = "docx"
