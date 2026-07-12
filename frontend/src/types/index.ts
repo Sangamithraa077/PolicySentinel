@@ -13,3 +13,4 @@ export interface ApiErrorResponse {
 
 export * from "./obligation";
 export * from "./conflict";
+export * from "./recommendation";

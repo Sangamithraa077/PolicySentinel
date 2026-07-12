@@ -116,6 +116,57 @@ class ComparisonPipelineService:
                         status="Open"
                     )
                     self._db.add(conflict_record)
+                    self._db.flush()
+
+                    # Generate and store AI recommendation
+                    try:
+                        from backend.services.ai.ai_recommendation_service import AIRecommendationService
+                        from backend.models.recommendation import Recommendation
+                        
+                        rec_ai_service = AIRecommendationService()
+                        
+                        # Resolve clause texts
+                        source_clause_text = source_ob.clause.text if (source_ob and source_ob.clause) else None
+                        target_clause_text = target_ob.clause.text if (target_ob and target_ob.clause) else None
+                        
+                        # Generate recommendation
+                        rec_res = rec_ai_service.generate_recommendation(
+                            conflict_type=item["type"],
+                            severity=item["severity"],
+                            source_ob=source_ob,
+                            target_ob=target_ob
+                        )
+                        
+                        # Generate redline
+                        redline_res = rec_ai_service.generate_redline(
+                            source_clause_text=source_clause_text,
+                            target_clause_text=target_clause_text,
+                            recommendation_summary=rec_res.recommended_resolution,
+                            suggested_action=rec_res.suggested_action
+                        )
+                        
+                        confidence = max(
+                            source_ob.confidence_score if source_ob else 0.0,
+                            target_ob.confidence_score if target_ob else 0.0,
+                            0.90
+                        )
+                        
+                        recommendation_record = Recommendation(
+                            conflict_id=conflict_record.id,
+                            recommendation_summary=rec_res.recommended_resolution,
+                            suggested_action=rec_res.suggested_action,
+                            original_clause=redline_res.original_clause,
+                            revised_clause=redline_res.revised_clause,
+                            reason=redline_res.reason_for_change,
+                            ai_model=rec_ai_service._settings.GEMINI_MODEL,
+                            confidence_score=confidence,
+                            status="Pending"
+                        )
+                        self._db.add(recommendation_record)
+                        logger.info("Successfully generated and linked AI recommendation for conflict %s", conflict_record.id)
+                    except Exception as rec_err:
+                        logger.error("Failed to generate AI recommendation for conflict %s: %s", conflict_record.id, rec_err)
+
                     all_conflicts.append(conflict_record)
 
                 logger.info(
