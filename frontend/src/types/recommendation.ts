@@ -14,6 +14,9 @@ export interface Recommendation {
   confidence_score: number;
   status: string;
   created_at: string;
+  reviewer_name?: string | null;
+  reviewed_at?: string | null;
+  review_comments?: string | null;
 }
 
 export interface RecommendationListResponse {

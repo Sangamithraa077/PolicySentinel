@@ -26,11 +26,22 @@ export function useRecommendationDetails(recommendationId: string | undefined) {
 export function useUpdateRecommendationStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ recommendationId, status }: { recommendationId: string; status: string }) =>
-      updateRecommendationStatus(recommendationId, status),
+    mutationFn: ({
+      recommendationId,
+      status,
+      reviewerName,
+      reviewComments,
+    }: {
+      recommendationId: string;
+      status: string;
+      reviewerName?: string;
+      reviewComments?: string;
+    }) => updateRecommendationStatus(recommendationId, status, reviewerName, reviewComments),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["recommendations"] });
       queryClient.invalidateQueries({ queryKey: ["recommendation", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["compliance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["compliance-audit-logs"] });
     },
   });
 }

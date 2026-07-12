@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { 
   FileText, Shield, AlertTriangle, CheckCircle2, Sparkles, List,
-  TrendingDown, TrendingUp, Activity, ArrowRight, Loader2, RefreshCw 
+  TrendingDown, TrendingUp, Activity, ArrowRight, Loader2, RefreshCw, FileDown 
 } from "lucide-react";
 
 import { usePolicies } from "@/hooks/usePolicies";
 import { useExecutiveSummary, useComplianceAuditLogs } from "@/hooks/useComplianceDashboard";
+import { API_BASE_URL } from "@/services/apiClient";
 
 export function ExecutiveDashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -103,16 +104,28 @@ export function ExecutiveDashboardPage() {
             Real-time compliance summary score calculation, risk level analysis, and audit trails tracking across policies.
           </p>
         </div>
-        <button 
-          onClick={() => {
-            summaryQuery.refetch();
-            auditLogsQuery.refetch();
-          }}
-          className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/80 transition-colors"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Refresh
-        </button>
+        <div className="flex gap-2">
+          {companyId && (
+            <a
+              href={`${API_BASE_URL}/compliance-dashboard/download?company_id=${companyId}`}
+              download="compliance_report.pdf"
+              className="flex items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 text-xs font-semibold dark:border-brand-900/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20 transition-colors"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Download PDF Report
+            </a>
+          )}
+          <button 
+            onClick={() => {
+              summaryQuery.refetch();
+              auditLogsQuery.refetch();
+            }}
+            className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/80 transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Main Grid: Compliance Dial & Risk Card */}

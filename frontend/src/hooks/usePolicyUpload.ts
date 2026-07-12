@@ -18,6 +18,8 @@ export function usePolicyUpload() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["policies"] });
+      void queryClient.invalidateQueries({ queryKey: ["compliance-summary"] });
+      void queryClient.invalidateQueries({ queryKey: ["compliance-audit-logs"] });
     },
   });
 

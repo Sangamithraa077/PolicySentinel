@@ -103,6 +103,16 @@ export function RecommendationDashboardPage() {
   const [minConfidence, setMinConfidence] = useState<number | "">("");
   const [selectedRecommendation, setSelectedRecommendation] = useState<Recommendation | null>(null);
 
+  // Review states
+  const [reviewerName, setReviewerName] = useState("");
+  const [reviewComments, setReviewComments] = useState("");
+
+  const handleSelectRecommendation = (rec: Recommendation) => {
+    setSelectedRecommendation(rec);
+    setReviewerName(rec.reviewer_name || "");
+    setReviewComments(rec.review_comments || "");
+  };
+
   // Fetch recommendations
   const { data, isLoading, isError, refetch } = useRecommendations({
     status: selectedStatus || undefined,
@@ -114,7 +124,12 @@ export function RecommendationDashboardPage() {
 
   const handleStatusUpdate = async (recommendationId: string, status: string) => {
     try {
-      const updated = await updateStatusMutation.mutateAsync({ recommendationId, status });
+      const updated = await updateStatusMutation.mutateAsync({
+        recommendationId,
+        status,
+        reviewerName: reviewerName.trim() || undefined,
+        reviewComments: reviewComments.trim() || undefined
+      });
       setSelectedRecommendation(updated);
     } catch (err) {
       console.error("Failed to update status", err);
@@ -209,7 +224,7 @@ export function RecommendationDashboardPage() {
                 {data?.items.map((rec) => (
                   <button
                     key={rec.id}
-                    onClick={() => setSelectedRecommendation(rec)}
+                    onClick={() => handleSelectRecommendation(rec)}
                     className={`w-full flex items-start justify-between p-4 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors ${
                       selectedRecommendation?.id === rec.id ? "bg-brand-50/50 dark:bg-brand-500/5" : ""
                     }`}
@@ -292,27 +307,85 @@ export function RecommendationDashboardPage() {
                   revised={selectedRecommendation.revised_clause || "No revised clause suggestion."}
                 />
 
-              {/* Actions Box */}
-              {selectedRecommendation.status === "Pending" && (
-                <div className="flex items-center gap-3 border-t border-border pt-4">
-                  <button
-                    onClick={() => handleStatusUpdate(selectedRecommendation.id, "Accepted")}
-                    disabled={updateStatusMutation.isPending}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-md bg-green-600 hover:bg-green-500 active:bg-green-700 disabled:opacity-50 text-white py-2 text-sm font-semibold transition-colors"
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleStatusUpdate(selectedRecommendation.id, "Rejected")}
-                    disabled={updateStatusMutation.isPending}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-md border border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-500/10 active:bg-red-100 disabled:opacity-50 text-red-600 dark:text-red-400 py-2 text-sm font-semibold transition-colors"
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Reject
-                  </button>
-                </div>
-              )}
+              </div>
+
+              {/* Review Workflow Form / Details */}
+              <div className="border-t border-border pt-4 flex flex-col gap-3">
+                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                  Compliance Officer Review
+                </span>
+                
+                {selectedRecommendation.status === "Pending" ? (
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-500 mb-1">
+                        Reviewer Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Reviewer Name (e.g., Ava Thornton)"
+                        value={reviewerName}
+                        onChange={(e) => setReviewerName(e.target.value)}
+                        className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-foreground focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/35 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-500 mb-1">
+                        Review Comments
+                      </label>
+                      <textarea
+                        placeholder="Add review comments/notes regarding this decision..."
+                        value={reviewComments}
+                        onChange={(e) => setReviewComments(e.target.value)}
+                        rows={2}
+                        className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-foreground focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/35 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 resize-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-1">
+                      <button
+                        onClick={() => handleStatusUpdate(selectedRecommendation.id, "Accepted")}
+                        disabled={updateStatusMutation.isPending}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-md bg-green-600 hover:bg-green-500 active:bg-green-700 disabled:opacity-50 text-white py-2 text-sm font-semibold transition-colors"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(selectedRecommendation.id, "Rejected")}
+                        disabled={updateStatusMutation.isPending}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-md border border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-500/10 active:bg-red-100 disabled:opacity-50 text-red-600 dark:text-red-400 py-2 text-sm font-semibold transition-colors"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-border/80 bg-neutral-50/50 dark:bg-neutral-900/30 p-3 text-xs flex flex-col gap-2">
+                    <div>
+                      <span className="font-semibold text-neutral-400 uppercase tracking-wider block">Reviewed By</span>
+                      <span className="text-neutral-800 dark:text-neutral-200 font-medium">
+                        {selectedRecommendation.reviewer_name || "System Actor"}
+                      </span>
+                    </div>
+                    {selectedRecommendation.reviewed_at && (
+                      <div>
+                        <span className="font-semibold text-neutral-400 uppercase tracking-wider block">Reviewed At</span>
+                        <span className="text-neutral-800 dark:text-neutral-200 font-medium">
+                          {new Date(selectedRecommendation.reviewed_at).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-semibold text-neutral-400 uppercase tracking-wider block">Review Comments</span>
+                      <p className="text-neutral-800 dark:text-neutral-200 leading-relaxed italic bg-surface/50 p-2 rounded border border-border mt-1">
+                        {selectedRecommendation.review_comments || "No comments recorded."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-400 dark:border-neutral-800">

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import datetime
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -52,8 +53,14 @@ class RecommendationManagementService:
             .where(Recommendation.id == rec_id, Recommendation.deleted_at.is_(None))
         )
 
-    def update_recommendation_status(self, rec_id: uuid.UUID, status: str) -> Recommendation | None:
-        """Accepts or rejects an AI recommendation, updating status and logging the audit event."""
+    def update_recommendation_status(
+        self,
+        rec_id: uuid.UUID,
+        status: str,
+        reviewer_name: str | None = None,
+        review_comments: str | None = None
+    ) -> Recommendation | None:
+        """Accepts or rejects an AI recommendation, updating status, recording reviewer inputs, and logging the audit event."""
         valid_statuses = {"accepted", "rejected", "pending"}
         norm_status = status.strip().lower()
         if norm_status not in valid_statuses:
@@ -68,6 +75,11 @@ class RecommendationManagementService:
         new_status = status_map[norm_status]
 
         recommendation.status = new_status
+        if reviewer_name:
+            recommendation.reviewer_name = reviewer_name
+            recommendation.reviewed_at = datetime.utcnow()
+        if review_comments:
+            recommendation.review_comments = review_comments
         
         # Log event
         logger.info(
@@ -81,12 +93,12 @@ class RecommendationManagementService:
         try:
             from backend.services.compliance_dashboard_service import record_compliance_audit_log
             conflict_record = recommendation.conflict
-            user_email = "System"
+            user_email = reviewer_name or "System"
             company_id = None
             if conflict_record:
                 if conflict_record.target_policy:
                     company_id = conflict_record.target_policy.company_id
-                    if conflict_record.target_policy.current_version and conflict_record.target_policy.current_version.uploaded_by:
+                    if not reviewer_name and conflict_record.target_policy.current_version and conflict_record.target_policy.current_version.uploaded_by:
                         user_email = conflict_record.target_policy.current_version.uploaded_by.email
             
             if company_id:

@@ -25,9 +25,16 @@ export async function getRecommendation(recommendationId: string): Promise<Recom
   return response.data;
 }
 
-export async function updateRecommendationStatus(recommendationId: string, status: string): Promise<Recommendation> {
+export async function updateRecommendationStatus(
+  recommendationId: string,
+  status: string,
+  reviewerName?: string,
+  reviewComments?: string
+): Promise<Recommendation> {
   const response = await apiClient.patch<Recommendation>(`/recommendations/${recommendationId}/status`, {
     status,
+    reviewer_name: reviewerName,
+    review_comments: reviewComments,
   });
   return response.data;
 }

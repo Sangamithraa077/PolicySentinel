@@ -74,7 +74,12 @@ def update_recommendation_status(
 ):
     """Updates the status of a recommendation (Accepted, Rejected, Pending)."""
     try:
-        recommendation = service.update_recommendation_status(recommendation_id, payload.status)
+        recommendation = service.update_recommendation_status(
+            recommendation_id,
+            payload.status,
+            reviewer_name=payload.reviewer_name,
+            review_comments=payload.review_comments
+        )
     except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

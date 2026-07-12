@@ -19,6 +19,11 @@ class RecommendationResponse(BaseModel):
     confidence_score: float
     status: str
     created_at: datetime
+    
+    # Review fields
+    reviewer_name: str | None = None
+    reviewed_at: datetime | None = None
+    review_comments: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -30,3 +35,5 @@ class RecommendationListResponse(BaseModel):
 
 class UpdateRecommendationStatusRequest(BaseModel):
     status: str = Field(..., description="Accepted or Rejected status of the recommendation")
+    reviewer_name: str | None = Field(None, description="Name of the compliance officer reviewing this item")
+    review_comments: str | None = Field(None, description="Comments/notes regarding the decision")

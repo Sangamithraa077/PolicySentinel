@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 import uuid
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey, Text, Float
+from sqlalchemy import ForeignKey, Text, Float, DateTime
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -31,5 +32,10 @@ class Recommendation(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base)
     ai_model: Mapped[str] = mapped_column(Text, nullable=False)
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False, server_default="Pending")  # Pending, Accepted, Rejected
+
+    # Review Workflow fields
+    reviewer_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    review_comments: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     conflict: Mapped["Conflict"] = relationship("Conflict", back_populates="recommendations")

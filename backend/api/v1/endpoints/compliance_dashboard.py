@@ -47,3 +47,25 @@ def list_compliance_audit_logs(
         "items": items,
         "total": total
     }
+
+
+@router.get(
+    "/download",
+    status_code=status.HTTP_200_OK,
+    summary="Download compliance report as PDF"
+)
+def download_compliance_report(
+    company_id: uuid.UUID = Query(..., description="The ID of the company"),
+    db: Session = Depends(get_db)
+):
+    """Generates and downloads the executive compliance report PDF containing score, conflicts, and audit trail."""
+    from fastapi import Response
+    from backend.services.compliance_report_generator import ComplianceReportGenerator
+    
+    generator = ComplianceReportGenerator(db)
+    pdf_bytes = generator.generate_report(company_id)
+    
+    headers = {
+        "Content-Disposition": "attachment; filename=compliance_report.pdf"
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
