@@ -78,5 +78,27 @@ class RecommendationManagementService:
             recommendation.conflict_id
         )
         
+        try:
+            from backend.services.compliance_dashboard_service import record_compliance_audit_log
+            conflict_record = recommendation.conflict
+            user_email = "System"
+            company_id = None
+            if conflict_record:
+                if conflict_record.target_policy:
+                    company_id = conflict_record.target_policy.company_id
+                    if conflict_record.target_policy.current_version and conflict_record.target_policy.current_version.uploaded_by:
+                        user_email = conflict_record.target_policy.current_version.uploaded_by.email
+            
+            if company_id:
+                record_compliance_audit_log(
+                    self._db,
+                    company_id,
+                    "Recommendation Approval/Rejection",
+                    user_email,
+                    f"Recommendation '{recommendation.recommendation_summary[:40]}...' status updated from '{old_status}' to '{new_status}'"
+                )
+        except Exception as audit_err:
+            logger.error("Failed to write recommendation approval audit log: %s", audit_err)
+
         self._db.commit()
         return recommendation

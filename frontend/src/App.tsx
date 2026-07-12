@@ -10,12 +10,14 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { UploadPage } from "@/pages/UploadPage";
 import { ConflictDashboardPage } from "@/pages/ConflictDashboardPage";
 import { RecommendationDashboardPage } from "@/pages/RecommendationDashboardPage";
+import { ExecutiveDashboardPage } from "@/pages/ExecutiveDashboardPage";
 
 export function App() {
   return (
     <Routes>
       <Route element={<DashboardLayout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="executive-dashboard" element={<ExecutiveDashboardPage />} />
         <Route path="policies" element={<PoliciesPage />} />
         <Route path="upload" element={<UploadPage />} />
         <Route path="clauses" element={<ClauseViewerPage />} />

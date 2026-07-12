@@ -188,6 +188,21 @@ class ComparisonPipelineService:
             try:
                 self._db.commit()
                 logger.info("Successfully committed %s conflict records to the database.", len(all_conflicts))
+                
+                # Write to the compliance audit log
+                try:
+                    from backend.services.compliance_dashboard_service import record_compliance_audit_log
+                    user_email = new_version.uploaded_by.email if (new_version and new_version.uploaded_by) else "System"
+                    record_compliance_audit_log(
+                        self._db,
+                        new_policy.company_id,
+                        "Recommendation Generation",
+                        user_email,
+                        f"Successfully generated {len(all_conflicts)} AI resolution recommendations and redline drafts"
+                    )
+                except Exception as audit_err:
+                    logger.error("Failed to write recommendation audit log: %s", audit_err)
+
             except Exception as exc:
                 self._db.rollback()
                 logger.error("Failed to commit conflict records to the database: %s", exc)

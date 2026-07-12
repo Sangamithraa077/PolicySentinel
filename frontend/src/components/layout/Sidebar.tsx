@@ -8,11 +8,13 @@ import {
   Upload,
   AlertTriangle,
   Sparkles,
+  Activity,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/executive-dashboard", label: "Executive Summary", icon: Activity, end: false },
   { to: "/policies", label: "Policies", icon: FileText, end: false },
   { to: "/upload", label: "Upload", icon: Upload, end: false },
   { to: "/clauses", label: "Clauses", icon: ListTree, end: false },

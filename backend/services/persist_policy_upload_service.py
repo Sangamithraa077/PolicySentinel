@@ -159,6 +159,25 @@ class PersistPolicyUploadService:
             self._db.add(version)
             self._db.flush()
 
+            # Record Policy Upload Audit Log
+            from backend.services.compliance_dashboard_service import record_compliance_audit_log
+            record_compliance_audit_log(
+                self._db,
+                company.id,
+                "Policy Upload",
+                uploader.email,
+                f"Policy '{policy.title}' uploaded by {uploader.email} (File: {validated.original_filename})"
+            )
+
+            if extracted_text:
+                record_compliance_audit_log(
+                    self._db,
+                    company.id,
+                    "Text Extraction",
+                    uploader.email,
+                    f"Successfully extracted text from policy document PDF '{validated.original_filename}'"
+                )
+
             # Automatically run clause segmentation and store in database
             if validated.extension == ".pdf" and extracted_text:
                 try:
@@ -177,6 +196,13 @@ class PersistPolicyUploadService:
                         policy_version_id=version.id,
                     )
                     logger.info("Successfully automatically segmented and stored clauses for policy %s", policy.id)
+                    record_compliance_audit_log(
+                        self._db,
+                        company.id,
+                        "Clause Segmentation",
+                        uploader.email,
+                        f"Successfully segmented policy text into {len(segmented_clauses)} clauses"
+                    )
 
                     # Automatically extract and store compliance obligations
                     try:
@@ -184,6 +210,13 @@ class PersistPolicyUploadService:
                         obligation_pipeline = ObligationExtractionPipelineService(self._db)
                         obligation_pipeline.run_pipeline(version.id)
                         logger.info("Successfully automatically extracted obligations for policy version %s", version.id)
+                        record_compliance_audit_log(
+                            self._db,
+                            company.id,
+                            "Obligation Extraction",
+                            uploader.email,
+                            f"Successfully extracted compliance obligations for policy version {version.version_number}"
+                        )
 
                         # Run comparison pipeline to detect and persist conflicts
                         try:
@@ -191,6 +224,13 @@ class PersistPolicyUploadService:
                             comparison_pipeline = ComparisonPipelineService(self._db)
                             comparison_pipeline.run_pipeline(version.id)
                             logger.info("Successfully automatically compared and detected conflicts for policy version %s", version.id)
+                            record_compliance_audit_log(
+                                self._db,
+                                company.id,
+                                "Conflict Detection",
+                                uploader.email,
+                                f"Successfully completed semantic comparison and conflict detection for policy version {version.version_number}"
+                            )
                         except Exception as exc:
                             logger.error("Failed to automatically run comparison pipeline for policy version %s: %s", version.id, exc)
                     except Exception as exc:
