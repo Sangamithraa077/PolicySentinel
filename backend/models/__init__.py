@@ -19,6 +19,7 @@ from backend.models.regulatory_clause import RegulatoryClause
 from backend.models.regulatory_framework import RegulatoryFramework
 from backend.models.user import User
 from backend.models.conflict import Conflict
+from backend.models.recommendation import Recommendation
 
 __all__ = [
     "Base",
@@ -30,6 +31,7 @@ __all__ = [
     "Clause",
     "Obligation",
     "Conflict",
+    "Recommendation",
     "RegulatoryFramework",
     "RegulatoryClause",
     "ClauseRegulatoryMapping",

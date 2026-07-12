@@ -15,6 +15,7 @@ from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKe
 if TYPE_CHECKING:
     from backend.models.policy import Policy
     from backend.models.obligation import Obligation
+    from backend.models.recommendation import Recommendation
 
 
 class Conflict(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -44,3 +45,4 @@ class Conflict(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     target_policy: Mapped["Policy"] = relationship("Policy", foreign_keys=[target_policy_id])
     source_obligation: Mapped[Optional["Obligation"]] = relationship("Obligation", foreign_keys=[source_obligation_id])
     target_obligation: Mapped[Optional["Obligation"]] = relationship("Obligation", foreign_keys=[target_obligation_id])
+    recommendations: Mapped[list["Recommendation"]] = relationship("Recommendation", back_populates="conflict", cascade="all, delete-orphan")
