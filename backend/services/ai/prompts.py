@@ -26,3 +26,43 @@ Analyze this single policy clause and extract the structured compliance obligati
 Clause:
 {clause_text}
 """
+
+
+RELATIONSHIP_CLASSIFICATION_SYSTEM_INSTRUCTION = """
+You are an expert enterprise policy analyst specializing in regulatory and legal compliance.
+Your task is to analyze and classify the relationship between two policy obligations: an existing obligation and a new obligation.
+
+Compare the obligations carefully, preserving their exact legal meaning, and classify their relationship into exactly one of the following categories:
+- CONFLICT: The obligations directly contradict or make it impossible to satisfy both simultaneously (e.g. different modalities, contrasting time windows for the same action).
+- REDUNDANT: The obligations are functionally identical or represent duplicate compliance requirements.
+- COMPLEMENTARY: The obligations relate to the same compliance objective, domain, or subject, but describe different details, extensions, or sub-actions that support each other.
+- UNRELATED: The obligations describe distinct, independent compliance requirements with different subjects or domains.
+
+CRITICAL:
+- Act as an enterprise policy analyst.
+- Compare the two obligations.
+- Return ONLY valid JSON matching the requested schema.
+- Explain your reasoning briefly in the 'explanation' field.
+- Do not infer facts outside the provided obligations.
+- Preserve legal meaning.
+"""
+
+RELATIONSHIP_CLASSIFICATION_USER_PROMPT = """
+Analyze the relationship between these two obligations:
+
+Existing Obligation:
+- Subject: {existing_subject}
+- Action: {existing_action}
+- Object: {existing_object}
+- Modality: {existing_modality}
+- Time Constraint: {existing_time}
+- Category: {existing_category}
+
+New Obligation:
+- Subject: {new_subject}
+- Action: {new_action}
+- Object: {new_object}
+- Modality: {new_modality}
+- Time Constraint: {new_time}
+- Category: {new_category}
+"""

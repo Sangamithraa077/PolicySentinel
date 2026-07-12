@@ -39,6 +39,11 @@ class Conflict(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     severity: Mapped[str] = mapped_column(Text, nullable=False)  # low, medium, high
     ai_explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(Text, nullable=False, server_default="Open")  # Open, Reviewed, Resolved
+    
+    # Relationship Classification fields
+    relationship_type: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # Explicit foreign_keys definitions to disambiguate multiple relations to same tables
     source_policy: Mapped["Policy"] = relationship("Policy", foreign_keys=[source_policy_id])
