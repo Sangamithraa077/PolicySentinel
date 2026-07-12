@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ClauseViewerPage } from "@/pages/ClauseViewerPage";
+import { ObligationViewerPage } from "@/pages/ObligationViewerPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { PoliciesPage } from "@/pages/PoliciesPage";
 import { ReportsPage } from "@/pages/ReportsPage";
@@ -17,6 +18,8 @@ export function App() {
         <Route path="upload" element={<UploadPage />} />
         <Route path="clauses" element={<ClauseViewerPage />} />
         <Route path="clauses/:policyId" element={<ClauseViewerPage />} />
+        <Route path="obligations" element={<ObligationViewerPage />} />
+        <Route path="obligations/:policyId" element={<ObligationViewerPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

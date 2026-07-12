@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = "changeme"
     CLAUDE_MODEL: str = "claude-sonnet-5"
 
+    # --- Gemini API ---
+    GEMINI_API_KEY: str = "changeme"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+
     # --- File Uploads ---
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_SIZE_MB: int = 25
@@ -80,7 +84,11 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         """CORS_ALLOWED_ORIGINS as a parsed list, e.g. 'a,b' -> ['a', 'b']."""
-        return [origin.strip() for origin in self.CORS_ALLOWED_ORIGINS.split(",") if origin.strip()]
+        return [
+            origin.strip().strip("'\"")
+            for origin in self.CORS_ALLOWED_ORIGINS.split(",")
+            if origin.strip()
+        ]
 
 
 @lru_cache

@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
     # catch_unhandled_exceptions_middleware's docstring).
     application.middleware("http")(catch_unhandled_exceptions_middleware)
 
+    # Configure CORS to allow cross-origin requests from the frontend dev servers
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -58,3 +59,5 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+

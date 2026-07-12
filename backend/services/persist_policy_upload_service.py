@@ -22,9 +22,12 @@ storage.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -111,6 +114,32 @@ class PersistPolicyUploadService:
                 content_type=validated.content_type,
             )
 
+            # Auto-extract text if the file is a PDF
+            extracted_text: str | None = None
+            if validated.extension == ".pdf":
+                try:
+                    from pathlib import Path
+                    from backend.repositories.local_file_storage_repository import LocalFileStorageRepository
+                    from backend.parsing.pdf_text_extractor import extract_text
+                    
+                    storage = self._file_storage._storage
+                    if isinstance(storage, LocalFileStorageRepository):
+                        pdf_path = storage._root / stored.storage_path
+                        extracted_text = extract_text(pdf_path)
+                    else:
+                        # Fallback for cloud/S3 storage backends
+                        import tempfile
+                        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                            tmp.write(validated.content)
+                            tmp_path = Path(tmp.name)
+                        try:
+                            extracted_text = extract_text(tmp_path)
+                        finally:
+                            tmp_path.unlink(missing_ok=True)
+                    logger.info("Successfully automatically extracted text from PDF for policy %s", policy.id)
+                except Exception as exc:
+                    logger.error("Failed to automatically extract text from PDF for policy %s: %s", policy.id, exc)
+
             version = PolicyVersion(
                 policy=policy,
                 version_number=version_number,
@@ -123,10 +152,43 @@ class PersistPolicyUploadService:
                 file_type=_EXTENSION_TO_FILE_TYPE[validated.extension],
                 description=description,
                 uploaded_at=stored.stored_at,
+                extracted_text=extracted_text,
             )
             policy.current_version = version
 
             self._db.add(version)
+            self._db.flush()
+
+            # Automatically run clause segmentation and store in database
+            if validated.extension == ".pdf" and extracted_text:
+                try:
+                    from backend.repositories.clause_repository import ClauseRepository
+                    from backend.services.clause_segmentation_service import ClauseSegmentationService
+                    from backend.services.store_segmented_clauses_service import StoreSegmentedClausesService
+
+                    segmenter = ClauseSegmentationService()
+                    segmented_clauses = segmenter.segment(extracted_text)
+
+                    clause_repo = ClauseRepository(self._db)
+                    store_service = StoreSegmentedClausesService(clause_repo)
+                    store_service.store(
+                        segmented_clauses,
+                        policy_id=policy.id,
+                        policy_version_id=version.id,
+                    )
+                    logger.info("Successfully automatically segmented and stored clauses for policy %s", policy.id)
+
+                    # Automatically extract and store compliance obligations
+                    try:
+                        from backend.services.ai.obligation_extraction_pipeline_service import ObligationExtractionPipelineService
+                        obligation_pipeline = ObligationExtractionPipelineService(self._db)
+                        obligation_pipeline.run_pipeline(version.id)
+                        logger.info("Successfully automatically extracted obligations for policy version %s", version.id)
+                    except Exception as exc:
+                        logger.error("Failed to automatically extract obligations for policy version %s: %s", version.id, exc)
+                except Exception as exc:
+                    logger.error("Failed to automatically segment and store clauses for policy %s: %s", policy.id, exc)
+
             self._db.commit()
         except Exception:
             self._db.rollback()

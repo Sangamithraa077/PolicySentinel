@@ -14,6 +14,7 @@ const navItems = [
   { to: "/policies", label: "Policies", icon: FileText, end: false },
   { to: "/upload", label: "Upload", icon: Upload, end: false },
   { to: "/clauses", label: "Clauses", icon: ListTree, end: false },
+  { to: "/obligations", label: "Obligations", icon: ShieldCheck, end: false },
   { to: "/reports", label: "Reports", icon: BarChart3, end: false },
   { to: "/settings", label: "Settings", icon: Settings, end: false },
 ] as const;

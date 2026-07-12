@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { listClauses } from "@/services/clauseService";
+import { listClauses, getClause } from "@/services/clauseService";
 
 /** The full, unfiltered clause set for a policy, in document order —
  * used to build the hierarchy tree and to look up ancestors for
@@ -23,5 +23,13 @@ export function useClauseSearch(policyId: string | undefined, keyword: string) {
     queryKey: ["clauses", policyId, "search", trimmed],
     queryFn: () => listClauses({ policyId, keyword: trimmed }),
     enabled: Boolean(policyId) && trimmed.length > 0,
+  });
+}
+
+export function useClauseDetails(clauseId: string | undefined) {
+  return useQuery({
+    queryKey: ["clause", clauseId],
+    queryFn: () => getClause(clauseId!),
+    enabled: Boolean(clauseId),
   });
 }

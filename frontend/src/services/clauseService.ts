@@ -28,3 +28,8 @@ export async function listClauses(params: ListClausesParams = {}): Promise<Claus
   });
   return response.data;
 }
+
+export async function getClause(clauseId: string): Promise<any> {
+  const response = await apiClient.get<any>(`/clauses/${clauseId}`);
+  return response.data;
+}

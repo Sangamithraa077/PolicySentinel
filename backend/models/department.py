@@ -14,7 +14,6 @@ from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKe
 
 if TYPE_CHECKING:
     from backend.models.company import Company
-    from backend.models.obligation import Obligation
     from backend.models.policy import Policy
     from backend.models.user import User
 
@@ -44,7 +43,4 @@ class Department(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     users: Mapped[List["User"]] = relationship("User", back_populates="department")
     policies: Mapped[List["Policy"]] = relationship(
         "Policy", back_populates="owning_department"
-    )
-    obligations: Mapped[List["Obligation"]] = relationship(
-        "Obligation", back_populates="responsible_department"
     )

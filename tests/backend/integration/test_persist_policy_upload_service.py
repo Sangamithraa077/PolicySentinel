@@ -153,3 +153,55 @@ def test_persist_deletes_the_orphaned_file_when_the_transaction_fails_after_stor
 
     remaining_policy = db_session.scalar(select(Policy).where(Policy.title == "Should Not Survive"))
     assert remaining_policy is None
+
+
+def test_persist_automatically_extracts_text_for_pdf(
+    db_session: Session, file_storage_service: FileStorageService, seeded_company_and_user
+) -> None:
+    from tests.backend.unit.test_pdf_text_extractor import make_large_pdf
+    
+    company, user = seeded_company_and_user
+    service = PersistPolicyUploadService(db_session, file_storage_service)
+
+    pdf_content = make_large_pdf("This is a PDF document content for auto extraction testing.")
+    validated = ValidatedPolicyDocument(
+        original_filename="auto-extracted.pdf",
+        extension=".pdf",
+        content_type="application/pdf",
+        content=pdf_content,
+        size_bytes=len(pdf_content),
+    )
+
+    result = service.persist(
+        validated,
+        company_id=company.id,
+        uploaded_by_user_id=user.id,
+        policy_title="Auto Extract PDF Policy",
+        version_number=1,
+        description="PDF upload",
+    )
+
+    # Verify that the PDF's text was automatically extracted and saved in the database
+    version = db_session.get(PolicyVersion, result.policy_version_id)
+    assert version is not None
+    assert version.extracted_text == "This is a PDF document content for auto extraction testing."
+
+    # Verify that the clauses were segmented and stored in the database
+    from backend.models.clause import Clause
+    clauses = db_session.scalars(
+        select(Clause).where(Clause.policy_version_id == version.id)
+    ).all()
+    assert len(clauses) > 0
+    assert clauses[0].text == "This is a PDF document content for auto extraction testing."
+
+    # Verify that obligations were automatically extracted and stored
+    from backend.models.obligation import Obligation
+    obligations = db_session.scalars(
+        select(Obligation).where(Obligation.policy_id == result.policy_id)
+    ).all()
+    assert len(obligations) > 0
+    assert obligations[0].clause_id == clauses[0].id
+    assert obligations[0].subject is not None
+    assert obligations[0].action is not None
+    assert obligations[0].object is not None
+

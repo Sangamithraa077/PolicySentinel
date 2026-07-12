@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.domain.exceptions.clause_exceptions import ClauseNotFoundError, ClauseStorageError
+from backend.domain.exceptions.obligation_exceptions import ObligationNotFoundError
 from backend.domain.exceptions.file_storage_exceptions import FileStorageError
 from backend.domain.exceptions.parsing_exceptions import DocumentParsingError
 from backend.domain.exceptions.policy_exceptions import (
@@ -189,6 +190,10 @@ async def clause_not_found_handler(request: Request, exc: ClauseNotFoundError) -
     return _error_response(status.HTTP_404_NOT_FOUND, "clause_not_found", str(exc))
 
 
+async def obligation_not_found_handler(request: Request, exc: ObligationNotFoundError) -> JSONResponse:
+    return _error_response(status.HTTP_404_NOT_FOUND, "obligation_not_found", str(exc))
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppException, app_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
@@ -204,6 +209,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(DocumentParsingError, document_parsing_error_handler)
     app.add_exception_handler(ClauseStorageError, clause_storage_error_handler)
     app.add_exception_handler(ClauseNotFoundError, clause_not_found_handler)
+    app.add_exception_handler(ObligationNotFoundError, obligation_not_found_handler)
     # No app.add_exception_handler(Exception, ...) here -- see
     # catch_unhandled_exceptions_middleware's docstring for why that
     # specific registration is deliberately avoided.

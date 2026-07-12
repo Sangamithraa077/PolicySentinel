@@ -44,6 +44,7 @@ class PolicyVersion(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         PGUUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="SET NULL")
     )
     ai_summary: Mapped[Optional[str]] = mapped_column(Text)
+    extracted_text: Mapped[Optional[str]] = mapped_column(Text)
     uploaded_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
 
     # --- upload metadata (extracted at upload time; see

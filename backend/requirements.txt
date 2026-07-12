@@ -24,12 +24,14 @@ python-multipart
 
 # --- AI / Claude API ---
 anthropic
+google-genai
 
 # --- Formal reasoning ---
 z3-solver
 
 # --- Document parsing ---
 pypdf
+pymupdf
 python-docx
 
 # --- Testing ---
