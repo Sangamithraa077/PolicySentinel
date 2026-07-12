@@ -1,8 +1,102 @@
 import { useState } from "react";
-import { Loader2, CheckCircle2, XCircle, ShieldAlert, Sparkles, Filter, ChevronRight } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ShieldAlert, Sparkles, ChevronRight } from "lucide-react";
 
 import { useRecommendations, useUpdateRecommendationStatus } from "@/hooks/useRecommendations";
 import type { Recommendation } from "@/types/recommendation";
+
+interface DiffWord {
+  value: string;
+  type: "added" | "removed" | "unchanged";
+}
+
+function diffWords(original: string, revised: string): DiffWord[] {
+  const oWords = original.split(/(\s+)/);
+  const rWords = revised.split(/(\s+)/);
+
+  const dp: number[][] = Array(oWords.length + 1)
+    .fill(null)
+    .map(() => Array(rWords.length + 1).fill(0));
+
+  for (let i = 1; i <= oWords.length; i++) {
+    for (let j = 1; j <= rWords.length; j++) {
+      if (oWords[i - 1] === rWords[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  const diff: DiffWord[] = [];
+  let i = oWords.length;
+  let j = rWords.length;
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oWords[i - 1] === rWords[j - 1]) {
+      diff.unshift({ value: oWords[i - 1], type: "unchanged" });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      diff.unshift({ value: rWords[j - 1], type: "added" });
+      j--;
+    } else {
+      diff.unshift({ value: oWords[i - 1], type: "removed" });
+      i--;
+    }
+  }
+
+  return diff;
+}
+
+function RedlineDiffViewer({ original, revised }: { original: string; revised: string }) {
+  const diff = diffWords(original, revised);
+
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {/* Original Clause (Left Pane) - shows unchanged & removed (red) */}
+      <div className="flex flex-col gap-1.5 rounded-md border border-border bg-neutral-50 dark:bg-neutral-900 p-3">
+        <span className="text-xs font-semibold text-red-500 uppercase tracking-wider">Original Clause</span>
+        <div className="text-xs font-mono text-neutral-800 dark:text-neutral-300 max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+          {diff.map((segment, idx) => {
+            if (segment.type === "added") return null;
+            if (segment.type === "removed") {
+              return (
+                <span
+                  key={idx}
+                  className="bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 line-through px-0.5 rounded font-semibold"
+                >
+                  {segment.value}
+                </span>
+              );
+            }
+            return <span key={idx}>{segment.value}</span>;
+          })}
+        </div>
+      </div>
+
+      {/* Suggested Revised Clause (Right Pane) - shows unchanged & added (green) */}
+      <div className="flex flex-col gap-1.5 rounded-md border border-border bg-neutral-50 dark:bg-neutral-900 p-3">
+        <span className="text-xs font-semibold text-green-500 uppercase tracking-wider">Revised Clause Suggestion</span>
+        <div className="text-xs font-mono text-neutral-800 dark:text-neutral-300 max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+          {diff.map((segment, idx) => {
+            if (segment.type === "removed") return null;
+            if (segment.type === "added") {
+              return (
+                <span
+                  key={idx}
+                  className="bg-green-100 dark:bg-green-950/70 text-green-800 dark:text-green-300 px-0.5 rounded font-semibold animate-pulse"
+                >
+                  {segment.value}
+                </span>
+              );
+            }
+            return <span key={idx}>{segment.value}</span>;
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function RecommendationDashboardPage() {
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -193,22 +287,10 @@ export function RecommendationDashboardPage() {
                 <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                   Suggested Redline Revision
                 </span>
-                <div className="flex flex-col gap-3 rounded-md bg-neutral-50 dark:bg-neutral-900 border border-border p-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-red-500">Original Clause</span>
-                    <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400 max-h-32 overflow-y-auto whitespace-pre-wrap">
-                      {selectedRecommendation.original_clause || "No original clause."}
-                    </p>
-                  </div>
-                  <div className="border-t border-dashed border-border my-1" />
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-green-500">Revised Clause Suggestion</span>
-                    <p className="text-xs font-mono text-neutral-900 dark:text-neutral-200 max-h-32 overflow-y-auto whitespace-pre-wrap bg-green-500/5 p-1 rounded">
-                      {selectedRecommendation.revised_clause || "No revised clause suggestion."}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                <RedlineDiffViewer
+                  original={selectedRecommendation.original_clause || "No original clause."}
+                  revised={selectedRecommendation.revised_clause || "No revised clause suggestion."}
+                />
 
               {/* Actions Box */}
               {selectedRecommendation.status === "Pending" && (
