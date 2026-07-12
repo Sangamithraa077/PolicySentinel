@@ -62,3 +62,7 @@ export async function listPolicies(params: ListPoliciesParams = {}): Promise<Pol
 export function policyDownloadUrl(policyId: string): string {
   return `${API_BASE_URL}/policies/${policyId}/download`;
 }
+
+export async function deletePolicy(policyId: string): Promise<void> {
+  await apiClient.delete(`/policies/${policyId}`);
+}

@@ -1,13 +1,24 @@
 import { useNavigate } from "react-router-dom";
-import { Loader2, Download, Eye, ShieldCheck, AlertTriangle, FileText, ArrowRight } from "lucide-react";
+import { Loader2, Download, Eye, ShieldCheck, AlertTriangle, FileText, ArrowRight, Trash2 } from "lucide-react";
 
-import { usePolicies } from "@/hooks/usePolicies";
+import { usePolicies, useDeletePolicy } from "@/hooks/usePolicies";
 import { policyDownloadUrl } from "@/services/policyService";
 import { extractApiErrorMessage } from "@/utils/apiError";
 
 export function PoliciesPage() {
   const navigate = useNavigate();
   const policiesQuery = usePolicies();
+  const deleteMutation = useDeletePolicy();
+
+  const handleDelete = async (policyId: string) => {
+    if (window.confirm("Are you sure you want to delete this policy? This will remove all associated clauses, obligations, and conflict logs.")) {
+      try {
+        await deleteMutation.mutateAsync(policyId);
+      } catch (err) {
+        console.error("Failed to delete policy", err);
+      }
+    }
+  };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status.toLowerCase()) {
@@ -147,6 +158,14 @@ export function PoliciesPage() {
                               >
                                 <Download className="h-4.5 w-4.5" />
                               </a>
+                              <button
+                                onClick={() => handleDelete(policy.id)}
+                                title="Delete Policy"
+                                disabled={deleteMutation.isPending}
+                                className="p-1.5 text-neutral-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                              >
+                                <Trash2 className="h-4.5 w-4.5" />
+                              </button>
                             </div>
                           </td>
                         </tr>
