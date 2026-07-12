@@ -13,6 +13,15 @@
 
 ---
 
+## 🌐 GitHub Repository
+
+**Repository:**  
+[https://github.com/Sangamithraa077/PolicySentinel.git](https://github.com/Sangamithraa077/PolicySentinel.git)
+
+This repository contains the complete implementation of **PolicySentinel**, including the frontend, backend, AI pipeline, database integration, knowledge graph, and project documentation.
+
+---
+
 ## 📖 Overview
 
 PolicySentinel is an **AI-powered policy intelligence and compliance governance platform**. 
