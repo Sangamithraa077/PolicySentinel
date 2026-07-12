@@ -20,7 +20,7 @@ export async function listObligations(params: ListObligationsParams = {}): Promi
       clause_id: params.clauseId,
       compliance_category: params.complianceCategory,
       modality: params.modality,
-      keyword: params.keyword,
+      keyword: params.keyword || undefined,
       limit: params.limit ?? MAX_OBLIGATION_PAGE_SIZE,
       offset: params.offset ?? 0,
     },

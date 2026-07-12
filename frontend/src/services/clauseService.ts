@@ -21,7 +21,7 @@ export async function listClauses(params: ListClausesParams = {}): Promise<Claus
     params: {
       policy_id: params.policyId,
       policy_version_id: params.policyVersionId,
-      keyword: params.keyword,
+      keyword: params.keyword || undefined,
       limit: params.limit ?? MAX_CLAUSE_PAGE_SIZE,
       offset: params.offset ?? 0,
     },
