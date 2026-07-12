@@ -115,6 +115,24 @@ class ComparisonPipelineService:
                         ai_explanation=ai_explanation,
                         status="Open"
                     )
+                    
+                    # Generate and store relationship classification
+                    try:
+                        from backend.services.ai.relationship_classification_service import RelationshipClassificationService
+                        rel_service = RelationshipClassificationService()
+                        logger.info("Running AI relationship classification for obligations %s and %s", src_id, tgt_id)
+                        rel_res = rel_service.classify_relationship(source_ob, target_ob)
+                        conflict_record.relationship_type = rel_res.relationship_type
+                        conflict_record.explanation = rel_res.explanation
+                        conflict_record.confidence_score = rel_res.confidence_score
+                        logger.info(
+                            "Successfully classified relationship as %s with confidence %s for conflict comparison",
+                            rel_res.relationship_type,
+                            rel_res.confidence_score
+                        )
+                    except Exception as rel_err:
+                        logger.error("Failed to run relationship classification: %s", rel_err)
+
                     self._db.add(conflict_record)
                     self._db.flush()
 

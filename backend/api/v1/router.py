@@ -9,7 +9,7 @@ Feature routers are registered here as they are implemented, e.g.:
 from fastapi import APIRouter, Depends
 
 from backend.api.dependencies.common import get_app_settings
-from backend.api.v1.endpoints import clauses, debug, policies, uploads, obligations, comparison, conflicts, recommendations, compliance_dashboard
+from backend.api.v1.endpoints import clauses, debug, policies, uploads, obligations, comparison, conflicts, recommendations, compliance_dashboard, relationships
 from backend.config.settings import Settings
 
 api_router = APIRouter()
@@ -22,6 +22,7 @@ api_router.include_router(comparison.router, prefix="/comparison", tags=["Compar
 api_router.include_router(conflicts.router, prefix="/conflicts", tags=["Conflicts"])
 api_router.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
 api_router.include_router(compliance_dashboard.router, prefix="/compliance-dashboard", tags=["Compliance Dashboard"])
+api_router.include_router(relationships.router, prefix="/relationships", tags=["Relationships"])
 api_router.include_router(debug.router, prefix="/debug", tags=["Debug"])
 
 

@@ -21,6 +21,7 @@ const navItems = [
   { to: "/obligations", label: "Obligations", icon: ShieldCheck, end: false },
   { to: "/conflicts", label: "Conflicts", icon: AlertTriangle, end: false },
   { to: "/recommendations", label: "Recommendations", icon: Sparkles, end: false },
+  { to: "/relationships", label: "Relationships", icon: ListTree, end: false },
   { to: "/reports", label: "Reports", icon: BarChart3, end: false },
   { to: "/settings", label: "Settings", icon: Settings, end: false },
 ] as const;

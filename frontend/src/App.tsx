@@ -10,6 +10,7 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { UploadPage } from "@/pages/UploadPage";
 import { ConflictDashboardPage } from "@/pages/ConflictDashboardPage";
 import { RecommendationDashboardPage } from "@/pages/RecommendationDashboardPage";
+import { RelationshipDashboardPage } from "@/pages/RelationshipDashboardPage";
 import { ExecutiveDashboardPage } from "@/pages/ExecutiveDashboardPage";
 
 export function App() {
@@ -27,6 +28,7 @@ export function App() {
         <Route path="conflicts" element={<ConflictDashboardPage />} />
         <Route path="conflicts/:policyId" element={<ConflictDashboardPage />} />
         <Route path="recommendations" element={<RecommendationDashboardPage />} />
+        <Route path="relationships" element={<RelationshipDashboardPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
