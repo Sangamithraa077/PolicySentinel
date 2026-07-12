@@ -8,6 +8,7 @@ import { PoliciesPage } from "@/pages/PoliciesPage";
 import { ReportsPage } from "@/pages/ReportsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { UploadPage } from "@/pages/UploadPage";
+import { ConflictDashboardPage } from "@/pages/ConflictDashboardPage";
 
 export function App() {
   return (
@@ -20,6 +21,8 @@ export function App() {
         <Route path="clauses/:policyId" element={<ClauseViewerPage />} />
         <Route path="obligations" element={<ObligationViewerPage />} />
         <Route path="obligations/:policyId" element={<ObligationViewerPage />} />
+        <Route path="conflicts" element={<ConflictDashboardPage />} />
+        <Route path="conflicts/:policyId" element={<ConflictDashboardPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

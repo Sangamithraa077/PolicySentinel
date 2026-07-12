@@ -104,14 +104,14 @@ def test_list_and_filter_obligations(client: TestClient, seeded_policy_with_obli
     assert {str(obligations[0].id), str(obligations[1].id)} == {x["id"] for x in items}
 
     # 3. Filter by compliance_category
-    response = client.get("/api/v1/obligations", params={"compliance_category": "Cryptography"})
+    response = client.get("/api/v1/obligations", params={"compliance_category": "Cryptography", "policy_id": str(policy.id)})
     assert response.status_code == 200
     items = response.json()["items"]
     assert len(items) == 1
     assert items[0]["id"] == str(obligations[0].id)
 
     # 4. Filter by modality
-    response = client.get("/api/v1/obligations", params={"modality": "Should"})
+    response = client.get("/api/v1/obligations", params={"modality": "Should", "policy_id": str(policy.id)})
     assert response.status_code == 200
     items = response.json()["items"]
     assert len(items) == 1

@@ -18,6 +18,7 @@ from backend.models.policy_version import PolicyVersion
 from backend.models.regulatory_clause import RegulatoryClause
 from backend.models.regulatory_framework import RegulatoryFramework
 from backend.models.user import User
+from backend.models.conflict import Conflict
 
 __all__ = [
     "Base",
@@ -28,6 +29,7 @@ __all__ = [
     "PolicyVersion",
     "Clause",
     "Obligation",
+    "Conflict",
     "RegulatoryFramework",
     "RegulatoryClause",
     "ClauseRegulatoryMapping",

@@ -6,6 +6,7 @@ import {
   Settings,
   ShieldCheck,
   Upload,
+  AlertTriangle,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -15,6 +16,7 @@ const navItems = [
   { to: "/upload", label: "Upload", icon: Upload, end: false },
   { to: "/clauses", label: "Clauses", icon: ListTree, end: false },
   { to: "/obligations", label: "Obligations", icon: ShieldCheck, end: false },
+  { to: "/conflicts", label: "Conflicts", icon: AlertTriangle, end: false },
   { to: "/reports", label: "Reports", icon: BarChart3, end: false },
   { to: "/settings", label: "Settings", icon: Settings, end: false },
 ] as const;

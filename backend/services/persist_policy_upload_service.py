@@ -184,6 +184,15 @@ class PersistPolicyUploadService:
                         obligation_pipeline = ObligationExtractionPipelineService(self._db)
                         obligation_pipeline.run_pipeline(version.id)
                         logger.info("Successfully automatically extracted obligations for policy version %s", version.id)
+
+                        # Run comparison pipeline to detect and persist conflicts
+                        try:
+                            from backend.services.comparison.comparison_pipeline_service import ComparisonPipelineService
+                            comparison_pipeline = ComparisonPipelineService(self._db)
+                            comparison_pipeline.run_pipeline(version.id)
+                            logger.info("Successfully automatically compared and detected conflicts for policy version %s", version.id)
+                        except Exception as exc:
+                            logger.error("Failed to automatically run comparison pipeline for policy version %s: %s", version.id, exc)
                     except Exception as exc:
                         logger.error("Failed to automatically extract obligations for policy version %s: %s", version.id, exc)
                 except Exception as exc:

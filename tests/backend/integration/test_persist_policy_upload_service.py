@@ -205,3 +205,96 @@ def test_persist_automatically_extracts_text_for_pdf(
     assert obligations[0].action is not None
     assert obligations[0].object is not None
 
+
+def test_persist_automatically_detects_conflicts(
+    db_session: Session, file_storage_service: FileStorageService, seeded_company_and_user
+) -> None:
+    from datetime import datetime, timezone
+    from tests.backend.unit.test_pdf_text_extractor import make_large_pdf
+    from backend.models.policy import Policy
+    from backend.models.policy_version import PolicyVersion
+    from backend.models.clause import Clause
+    from backend.models.obligation import Obligation
+    from backend.models.conflict import Conflict
+    from backend.models.enums import PolicyDocumentFileType
+
+    company, user = seeded_company_and_user
+
+    # 1. Pre-seed an existing policy with obligations for the same company
+    existing_policy = Policy(company=company, title="Existing Policy")
+    db_session.add(existing_policy)
+    db_session.flush()
+
+    existing_version = PolicyVersion(
+        policy=existing_policy,
+        version_number=1,
+        source_file_reference="path/existing.pdf",
+        file_hash="hash_existing",
+        uploaded_by=user,
+        original_filename="existing.pdf",
+        size_bytes=512,
+        file_type=PolicyDocumentFileType.PDF,
+        uploaded_at=datetime.now(timezone.utc),
+    )
+    db_session.add(existing_version)
+    db_session.flush()
+
+    existing_policy.current_version = existing_version
+    db_session.flush()
+
+    existing_clause = Clause(
+        policy_id=existing_policy.id,
+        policy_version_id=existing_version.id,
+        clause_number="1",
+        text="Staff must observe security boundaries.",
+        order_index=1
+    )
+    db_session.add(existing_clause)
+    db_session.flush()
+
+    existing_obligation = Obligation(
+        clause_id=existing_clause.id,
+        policy_id=existing_policy.id,
+        subject="Staff members",
+        action="observe boundaries",
+        object="security boundaries",
+        modality="Must",
+        compliance_category="Security Awareness",
+        confidence_score=0.98,
+        ai_model="mock"
+    )
+    db_session.add(existing_obligation)
+    db_session.commit()
+
+    # 2. Trigger the automated upload pipeline for a new policy
+    service = PersistPolicyUploadService(db_session, file_storage_service)
+    pdf_content = make_large_pdf("This is a PDF document content for auto extraction testing.")
+    validated = ValidatedPolicyDocument(
+        original_filename="new-policy.pdf",
+        extension=".pdf",
+        content_type="application/pdf",
+        content=pdf_content,
+        size_bytes=len(pdf_content),
+    )
+
+    result = service.persist(
+        validated,
+        company_id=company.id,
+        uploaded_by_user_id=user.id,
+        policy_title="New Uploaded Policy",
+        version_number=1,
+        description="Auto conflict pipeline test",
+    )
+
+    # 3. Verify that conflicts were automatically detected and stored in the database
+    conflicts = db_session.scalars(
+        select(Conflict).where(Conflict.target_policy_id == result.policy_id)
+    ).all()
+
+    # Since the mock generator generates deterministic obligations, the compared obligations
+    # between the newly uploaded policy and the existing one should match rules
+    assert len(conflicts) > 0
+    assert conflicts[0].source_policy_id == existing_policy.id
+    assert conflicts[0].target_policy_id == result.policy_id
+
+
