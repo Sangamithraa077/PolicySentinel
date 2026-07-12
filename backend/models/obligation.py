@@ -15,6 +15,7 @@ from backend.models.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKe
 if TYPE_CHECKING:
     from backend.models.clause import Clause
     from backend.models.policy import Policy
+    from backend.models.regulatory_mapping import RegulatoryMapping
 
 
 class Obligation(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -39,3 +40,4 @@ class Obligation(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     clause: Mapped["Clause"] = relationship("Clause", back_populates="obligations")
     policy: Mapped["Policy"] = relationship("Policy")
+    regulatory_mappings: Mapped[list["RegulatoryMapping"]] = relationship("RegulatoryMapping", back_populates="obligation")

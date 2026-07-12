@@ -31,10 +31,42 @@
 
 @layer base {
   * {
-    @apply border-border dark:border-neutral-800;
+    @apply border-border dark:border-neutral-800 transition-all duration-200 ease-out;
   }
 
   body {
-    @apply bg-surface-muted text-foreground antialiased transition-colors dark:bg-neutral-950 dark:text-neutral-100;
+    @apply bg-neutral-50 text-foreground antialiased transition-colors dark:bg-neutral-950 dark:text-neutral-100;
+  }
+
+  /* Custom Professional Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neutral-200 dark:bg-neutral-800 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-300 dark:bg-neutral-700;
+  }
+
+  /* Glassmorphism utility */
+  .glass-panel {
+    @apply bg-surface/80 backdrop-blur-md border border-border/60 dark:bg-neutral-900/80 dark:border-neutral-800/60;
+  }
+
+  /* Premium Box Shadows */
+  .premium-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  .premium-shadow-hover:hover {
+    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
   }
 }

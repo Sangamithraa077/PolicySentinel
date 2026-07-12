@@ -78,6 +78,53 @@ class ObligationExtractionPipelineService:
                 
                 logger.info("Successfully extracted and stored obligation for clause %s (Obligation ID: %s)", clause.id, obligation.id)
                 
+                # 4.5. Generate and store AI regulatory mapping
+                try:
+                    from backend.services.ai.regulatory_mapping_service import AIRegulatoryMappingService
+                    from backend.models.regulatory_mapping import RegulatoryMapping
+                    from backend.models.regulatory_clause import RegulatoryClause
+                    from backend.models.regulatory_framework import RegulatoryFramework
+                    
+                    mapping_service = AIRegulatoryMappingService(self._db)
+                    logger.info("Running AI regulatory mapping for obligation: %s", obligation.id)
+                    mapping_res = mapping_service.map_obligation(obligation)
+                    
+                    regulation_id = "NONE"
+                    if mapping_res.framework_name != "NONE":
+                        reg_clause = self._db.scalar(
+                            select(RegulatoryClause)
+                            .join(RegulatoryFramework)
+                            .where(
+                                RegulatoryFramework.name == mapping_res.framework_name,
+                                RegulatoryClause.clause_reference == mapping_res.clause_number,
+                                RegulatoryClause.deleted_at.is_(None),
+                                RegulatoryFramework.deleted_at.is_(None)
+                            )
+                        )
+                        if reg_clause:
+                            # Let's assign regulation_id to the reference or framework_id
+                            regulation_id = reg_clause.clause_reference
+                            
+                    reg_mapping = RegulatoryMapping(
+                        policy_id=obligation.policy_id,
+                        obligation_id=obligation.id,
+                        framework_name=mapping_res.framework_name,
+                        regulation_id=regulation_id,
+                        clause_number=mapping_res.clause_number,
+                        confidence_score=mapping_res.confidence_score,
+                        ai_explanation=mapping_res.explanation
+                    )
+                    self._db.add(reg_mapping)
+                    self._db.flush()
+                    logger.info(
+                        "Successfully created regulatory mapping for obligation %s (Framework: %s, Clause: %s)",
+                        obligation.id,
+                        mapping_res.framework_name,
+                        mapping_res.clause_number
+                    )
+                except Exception as map_err:
+                    logger.error("Failed to run regulatory mapping for obligation %s: %s", obligation.id, map_err)
+                
             except Exception as exc:
                 # 5. Continue processing even if one clause fails
                 logger.error("Failed to extract obligation for clause %s: %s. Continuing...", clause.id, exc)

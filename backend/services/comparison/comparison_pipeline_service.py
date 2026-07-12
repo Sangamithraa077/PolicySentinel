@@ -116,22 +116,85 @@ class ComparisonPipelineService:
                         status="Open"
                     )
                     
-                    # Generate and store relationship classification
+                    # Step 1: Run relationship classification
                     try:
                         from backend.services.ai.relationship_classification_service import RelationshipClassificationService
                         rel_service = RelationshipClassificationService()
-                        logger.info("Running AI relationship classification for obligations %s and %s", src_id, tgt_id)
+                        logger.info("Step 1: Running AI relationship classification for obligations %s and %s", src_id, tgt_id)
                         rel_res = rel_service.classify_relationship(source_ob, target_ob)
                         conflict_record.relationship_type = rel_res.relationship_type
                         conflict_record.explanation = rel_res.explanation
                         conflict_record.confidence_score = rel_res.confidence_score
                         logger.info(
-                            "Successfully classified relationship as %s with confidence %s for conflict comparison",
+                            "Step 1 Complete: Classified relationship as %s with confidence %s",
                             rel_res.relationship_type,
                             rel_res.confidence_score
                         )
                     except Exception as rel_err:
-                        logger.error("Failed to run relationship classification: %s", rel_err)
+                        logger.error("Step 1 Failed: Relationship classification error: %s", rel_err)
+
+                    # Step 2: Run temporal analysis
+                    try:
+                        from backend.services.ai.temporal_conflict_detection_service import TemporalConflictDetectionService
+                        temp_service = TemporalConflictDetectionService()
+                        logger.info("Step 2: Running Temporal analysis for obligations %s and %s", src_id, tgt_id)
+                        temp_res = temp_service.detect_temporal_conflict(source_ob, target_ob)
+                        conflict_record.temporal_conflict = temp_res.conflict_type if temp_res.is_conflict else "none"
+                        logger.info(
+                            "Step 2 Complete: Temporal conflict outcome: %s (Detected values: %s)",
+                            conflict_record.temporal_conflict,
+                            temp_res.detected_values
+                        )
+                    except Exception as temp_err:
+                        logger.error("Step 2 Failed: Temporal analysis error: %s", temp_err)
+                        conflict_record.temporal_conflict = "none"
+
+                    # Step 3: Run strength analysis
+                    try:
+                        from backend.services.ai.strength_conflict_detection_service import StrengthConflictDetectionService
+                        str_service = StrengthConflictDetectionService()
+                        logger.info("Step 3: Running Strength/Modality analysis for obligations %s and %s", src_id, tgt_id)
+                        str_res = str_service.detect_strength_conflict(source_ob, target_ob)
+                        conflict_record.strength_conflict = str_res.strength_conflict
+                        logger.info(
+                            "Step 3 Complete: Strength conflict outcome: %s",
+                            conflict_record.strength_conflict
+                        )
+                    except Exception as str_err:
+                        logger.error("Step 3 Failed: Strength analysis error: %s", str_err)
+                        conflict_record.strength_conflict = "NONE"
+
+                    # Step 4: Run staleness detection
+                    try:
+                        from backend.services.ai.staleness_detection_service import StalenessDetectionService
+                        stale_service = StalenessDetectionService()
+                        existing_version = self._db.get(PolicyVersion, existing_policy.current_version_id)
+                        logger.info("Step 4: Running Staleness detection for version %s", existing_version.id if existing_version else "None")
+                        stale_res = stale_service.detect_staleness(existing_version)
+                        conflict_record.staleness_status = stale_res.status
+                        logger.info(
+                            "Step 4 Complete: Staleness outcome: %s",
+                            conflict_record.staleness_status
+                        )
+                    except Exception as stale_err:
+                        logger.error("Step 4 Failed: Staleness detection error: %s", stale_err)
+                        conflict_record.staleness_status = "Review Required"
+
+                    # Step 5: Merge results and build parameters payload
+                    import json
+                    try:
+                        logger.info("Step 5: Merging results and serializing comparison parameters")
+                        params = {
+                            "obligation_a_time": source_ob.time_constraint if source_ob else None,
+                            "obligation_b_time": target_ob.time_constraint if target_ob else None,
+                            "obligation_a_modality": source_ob.modality if source_ob else None,
+                            "obligation_b_modality": target_ob.modality if target_ob else None,
+                            "version_number": new_version.version_number,
+                            "effective_date": new_version.effective_date.isoformat() if new_version.effective_date else None,
+                        }
+                        conflict_record.detected_parameters = json.dumps(params)
+                    except Exception as merge_err:
+                        logger.error("Step 5 Failed: Parameter serialization error: %s", merge_err)
 
                     self._db.add(conflict_record)
                     self._db.flush()

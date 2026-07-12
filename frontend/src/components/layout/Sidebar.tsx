@@ -9,8 +9,12 @@ import {
   AlertTriangle,
   Sparkles,
   Activity,
+  FileWarning,
+  Share2,
+  Play,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -22,6 +26,10 @@ const navItems = [
   { to: "/conflicts", label: "Conflicts", icon: AlertTriangle, end: false },
   { to: "/recommendations", label: "Recommendations", icon: Sparkles, end: false },
   { to: "/relationships", label: "Relationships", icon: ListTree, end: false },
+  { to: "/findings", label: "Advanced Findings", icon: FileWarning, end: false },
+  { to: "/regulatory-dashboard", label: "Regulatory Dashboard", icon: ShieldCheck, end: false },
+  { to: "/knowledge-graph", label: "Knowledge Graph", icon: Share2, end: false },
+  { to: "/demo-mode", label: "Guided Demo", icon: Play, end: false },
   { to: "/reports", label: "Reports", icon: BarChart3, end: false },
   { to: "/settings", label: "Settings", icon: Settings, end: false },
 ] as const;

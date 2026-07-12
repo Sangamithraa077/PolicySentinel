@@ -57,16 +57,22 @@ class ObligationExtractorService:
         user_prompt = OBLIGATION_EXTRACTION_USER_PROMPT.format(clause_text=clause_text)
         
         try:
-            response = self._client.models.generate_content(
-                model=self._settings.GEMINI_MODEL,
-                contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=OBLIGATION_EXTRACTION_SYSTEM_INSTRUCTION,
-                    response_mime_type="application/json",
-                    response_schema=ObligationExtractionResult,
-                    temperature=0.1,
+            from backend.utils.retry_helper import retry_on_transient_error
+            
+            @retry_on_transient_error(max_retries=3, initial_delay=1.0)
+            def _call_gemini_retried():
+                return self._client.models.generate_content(
+                    model=self._settings.GEMINI_MODEL,
+                    contents=user_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=OBLIGATION_EXTRACTION_SYSTEM_INSTRUCTION,
+                        response_mime_type="application/json",
+                        response_schema=ObligationExtractionResult,
+                        temperature=0.1,
+                    )
                 )
-            )
+            
+            response = _call_gemini_retried()
             
             # The SDK automatically handles Pydantic validation when response_schema is passed,
             # but we parse the response string to return the parsed Pydantic object.
@@ -74,7 +80,7 @@ class ObligationExtractorService:
             return ObligationExtractionResult(**data)
             
         except Exception as exc:
-            logger.error("Failed to extract obligation using Gemini API: %s. Falling back to mock.", exc)
+            logger.error("Failed to extract obligation using Gemini API after retries: %s. Falling back to mock.", exc)
             return self._get_mock_obligation(clause_text)
 
     def _get_mock_obligation(self, clause_text: str) -> ObligationExtractionResult:

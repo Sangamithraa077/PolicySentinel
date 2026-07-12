@@ -22,10 +22,10 @@ export function ToastStack({ toasts, onDismiss }: ToastStackProps) {
         <div
           key={toast.id}
           role="status"
-          className={`pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg ${
+          className={`pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-0 scale-100 animate-in fade-in slide-in-from-top-4 ${
             toast.tone === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-              : "border-red-200 bg-red-50 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+              ? "border-emerald-200/60 bg-emerald-50/90 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-950/80 dark:text-emerald-300"
+              : "border-red-200/60 bg-red-50/90 text-red-800 dark:border-red-500/30 dark:bg-red-950/80 dark:text-red-300"
           }`}
         >
           {toast.tone === "success" ? (

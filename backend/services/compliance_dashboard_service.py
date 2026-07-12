@@ -44,7 +44,8 @@ class ComplianceDashboardService:
                 "compliance_score": 100.0,
                 "risk_score": 0.0,
                 "risk_level": "Low",
-                "risk_summary": "No policies uploaded yet. Compliance risk is evaluated as Low."
+                "risk_summary": "No policies uploaded yet. Compliance risk is evaluated as Low.",
+                "average_policy_health_score": 100.0
             }
 
         # 2. Total clauses
@@ -84,6 +85,18 @@ class ComplianceDashboardService:
         # 6. Compliance Score & Risk Level calculation
         scoring = self._score_engine.calculate_score(conflicts, recommendations)
 
+        # 7. Calculate Policy Health Scores
+        from backend.services.policy_health_score_engine import PolicyHealthScoreEngine
+        health_engine = PolicyHealthScoreEngine(self._db)
+        health_scores = []
+        for p_id in policy_ids:
+            try:
+                health_res = health_engine.calculate_health_score(p_id)
+                health_scores.append(health_res.score)
+            except Exception as h_err:
+                logger.error("Failed to compute health score for policy %s: %s", p_id, h_err)
+        avg_health = sum(health_scores) / len(health_scores) if health_scores else 100.0
+
         return {
             "total_policies": total_policies,
             "total_clauses": total_clauses,
@@ -94,7 +107,8 @@ class ComplianceDashboardService:
             "compliance_score": scoring["compliance_score"],
             "risk_score": scoring["risk_score"],
             "risk_level": scoring["risk_level"],
-            "risk_summary": scoring["risk_summary"]
+            "risk_summary": scoring["risk_summary"],
+            "average_policy_health_score": round(avg_health, 1)
         }
 
     def list_audit_history(

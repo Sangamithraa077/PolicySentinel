@@ -45,6 +45,12 @@ class Conflict(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
+    # Advanced Anomaly and Staleness analysis fields
+    temporal_conflict: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    strength_conflict: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    staleness_status: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    detected_parameters: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     # Explicit foreign_keys definitions to disambiguate multiple relations to same tables
     source_policy: Mapped["Policy"] = relationship("Policy", foreign_keys=[source_policy_id])
     target_policy: Mapped["Policy"] = relationship("Policy", foreign_keys=[target_policy_id])

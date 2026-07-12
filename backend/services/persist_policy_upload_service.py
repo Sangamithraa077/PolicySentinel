@@ -239,6 +239,22 @@ class PersistPolicyUploadService:
                     logger.error("Failed to automatically segment and store clauses for policy %s: %s", policy.id, exc)
 
             self._db.commit()
+
+            # Automatically synchronize metadata to Neo4j Knowledge Graph
+            try:
+                from backend.graph.graph_population_service import GraphPopulationService
+                # Initialize new session from connection pool to be completely isolated and safe
+                from backend.database.session import SessionLocal
+                with SessionLocal() as sync_db:
+                    sync_service = GraphPopulationService(sync_db)
+                    logger.info("Automatically synchronizing policy %s to Neo4j graph...", policy.id)
+                    sync_success = sync_service.sync_policy(policy.id)
+                    if sync_success:
+                        logger.info("Successfully automatically synchronized policy %s to Neo4j graph.", policy.id)
+                    else:
+                        logger.warning("Automatic graph sync failed for policy %s, but workflow continued.", policy.id)
+            except Exception as sync_err:
+                logger.error("Error during automatic graph synchronization for policy %s: %s", policy.id, sync_err)
         except Exception:
             self._db.rollback()
             if stored is not None:

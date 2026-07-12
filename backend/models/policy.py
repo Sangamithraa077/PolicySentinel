@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from backend.models.company import Company
     from backend.models.department import Department
     from backend.models.policy_version import PolicyVersion
+    from backend.models.regulatory_mapping import RegulatoryMapping
 
 
 class Policy(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -66,3 +67,4 @@ class Policy(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         post_update=True,
     )
     clauses: Mapped[List["Clause"]] = relationship("Clause", back_populates="policy")
+    regulatory_mappings: Mapped[List["RegulatoryMapping"]] = relationship("RegulatoryMapping", back_populates="policy")

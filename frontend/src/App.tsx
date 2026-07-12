@@ -12,6 +12,10 @@ import { ConflictDashboardPage } from "@/pages/ConflictDashboardPage";
 import { RecommendationDashboardPage } from "@/pages/RecommendationDashboardPage";
 import { RelationshipDashboardPage } from "@/pages/RelationshipDashboardPage";
 import { ExecutiveDashboardPage } from "@/pages/ExecutiveDashboardPage";
+import { AdvancedFindingsPage } from "@/pages/AdvancedFindingsPage";
+import { RegulatoryDashboardPage } from "@/pages/RegulatoryDashboardPage";
+import { KnowledgeGraphPage } from "@/pages/KnowledgeGraphPage";
+import { DemoModePage } from "@/pages/DemoModePage";
 
 export function App() {
   return (
@@ -29,6 +33,10 @@ export function App() {
         <Route path="conflicts/:policyId" element={<ConflictDashboardPage />} />
         <Route path="recommendations" element={<RecommendationDashboardPage />} />
         <Route path="relationships" element={<RelationshipDashboardPage />} />
+        <Route path="findings" element={<AdvancedFindingsPage />} />
+        <Route path="regulatory-dashboard" element={<RegulatoryDashboardPage />} />
+        <Route path="knowledge-graph" element={<KnowledgeGraphPage />} />
+        <Route path="demo-mode" element={<DemoModePage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

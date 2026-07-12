@@ -18,6 +18,7 @@ class ExecutiveSummaryResponse(BaseModel):
     risk_score: float
     risk_level: str
     risk_summary: str
+    average_policy_health_score: float | None = 100.0
 
     model_config = ConfigDict(from_attributes=True)
 

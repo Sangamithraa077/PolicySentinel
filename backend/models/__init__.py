@@ -21,6 +21,7 @@ from backend.models.user import User
 from backend.models.conflict import Conflict
 from backend.models.recommendation import Recommendation
 from backend.models.compliance_audit_log import ComplianceAuditLog
+from backend.models.regulatory_mapping import RegulatoryMapping
 
 __all__ = [
     "Base",
@@ -40,4 +41,5 @@ __all__ = [
     "Finding",
     "FindingClauseLink",
     "AuditLog",
+    "RegulatoryMapping",
 ]
