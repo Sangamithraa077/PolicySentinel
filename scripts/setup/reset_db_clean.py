@@ -43,12 +43,13 @@ def reset_database():
     # 2. Seed single clean company & administrator
     print("[Reset] Seeding clean demo tenant company and admin user...")
     try:
-        co = Company(name="Acme Global Corporation")
+        co = Company(id="6e671c26-dfd8-4ebe-832f-f5277432f865", name="Acme Global Corporation")
         db.add(co)
         db.flush()
 
         password_hash = hash_password("DemoPassword123!")
         admin_user = User(
+            id="f23c1df1-cb4f-4729-beb5-0b27315c9f2b",
             company_id=co.id,
             email="admin@acmeglobal.com",
             password_hash=password_hash,
@@ -57,9 +58,28 @@ def reset_database():
             is_active=True
         )
         db.add(admin_user)
+
+        # Seed second Globex tenant
+        co2 = Company(id="170b49ac-2a2c-464e-9967-55938386f3b7", name="Globex Corporation")
+        db.add(co2)
+        db.flush()
+
+        admin_user2 = User(
+            id="6ba597eb-e645-4579-8d67-77a63269f5cf",
+            company_id=co2.id,
+            email="admin@globex.com",
+            password_hash=password_hash,
+            full_name="Globex Compliance Director",
+            role=UserRole.ADMIN,
+            is_active=True
+        )
+        db.add(admin_user2)
+        
         db.commit()
-        print(f"[Reset] Seeded Company ID: {co.id}")
-        print(f"[Reset] Seeded User ID: {admin_user.id}")
+        print(f"[Reset] Seeded Company ID (Acme): {co.id}")
+        print(f"[Reset] Seeded User ID (Acme): {admin_user.id}")
+        print(f"[Reset] Seeded Company ID (Globex): {co2.id}")
+        print(f"[Reset] Seeded User ID (Globex): {admin_user2.id}")
     except Exception as exc:
         db.rollback()
         print(f"[Reset] Failed to seed demo user: {exc}")
