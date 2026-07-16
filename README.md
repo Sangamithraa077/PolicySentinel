@@ -1,6 +1,11 @@
-# PolicySentinel
+<div align="center">
+
+# 🛡️ PolicySentinel
 
 ### AI-Powered Enterprise Policy Intelligence & Governance Platform
+
+**Upload your organization's policy documents. PolicySentinel reads them, finds where they
+contradict each other, and drafts the fix.**
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -11,20 +16,48 @@
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-1A73E8?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 
+</div>
+
 ---
 
-## Overview
+## Table of contents
 
-PolicySentinel is an AI-powered policy intelligence and compliance governance platform.
+- [What it does](#what-it-does)
+- [Business impact](#business-impact)
+- [Key features](#key-features)
+- [UI preview](#ui-preview)
+- [System architecture](#system-architecture)
+- [Technology stack](#technology-stack)
+- [Project structure](#project-structure)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+- [Development](#development)
+- [API reference](#api-reference)
+- [Known limitations](#known-limitations)
+- [Roadmap](#roadmap)
 
-As organizations scale, internal corporate policies grow, overlap, and frequently drift into direct
-contradiction with one another. Compliance teams struggle to track overlaps, outdated mandates, and
-mismatches against external legal standards (GDPR, ISO 27001, RBI, SEBI).
+---
 
-**PolicySentinel is not a document management system.** It parses natural-language policy documents
-into structured semantic elements, compares them across the organization's policy set, flags
-compliance risks and contradictions, and drafts AI-generated resolutions for a compliance officer to
-review.
+## What it does
+
+As organizations scale, internal policies pile up, overlap, and quietly start contradicting one
+another — one document says "delete logs in 24 hours," another says "retain logs for 7 years."
+Nobody notices until an audit or an incident forces the question.
+
+PolicySentinel automates the part a compliance team would otherwise do by hand:
+
+1. **Upload** a policy document (PDF, DOCX, or plain text).
+2. It's **automatically parsed** into a hierarchy of clauses, and Google Gemini extracts each
+   clause's compliance obligation (who must do what, how strongly, under what conditions).
+3. Those obligations are **compared against every other policy** the company has on file.
+4. Real conflicts — contradictions, duplicates, weakened requirements, mismatched deadlines — are
+   **flagged with an AI-drafted recommendation**, ready for a compliance officer to accept or
+   reject.
+5. Everything is mirrored into a **knowledge graph** and summarized on an **executive dashboard**,
+   with a full, immutable audit trail and an exportable PDF report.
+
+**PolicySentinel is not a document management system** — it doesn't just store policies, it reads
+and reasons about them.
 
 ### Business impact
 
