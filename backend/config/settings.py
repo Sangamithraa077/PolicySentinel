@@ -8,7 +8,10 @@ this module only declares and loads configuration.
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_PLACEHOLDER_SECRET = "changeme"
 
 
 class Settings(BaseSettings):
@@ -89,6 +92,35 @@ class Settings(BaseSettings):
             for origin in self.CORS_ALLOWED_ORIGINS.split(",")
             if origin.strip()
         ]
+
+    @model_validator(mode="after")
+    def _reject_placeholder_secrets_in_production(self) -> "Settings":
+        """Fails fast on startup rather than silently serving production
+        traffic with the same default secrets/passwords this repo ships in
+        .env.example — a fresh clone that sets APP_ENV=production without
+        overriding them would otherwise run "successfully" with a known,
+        public JWT/app secret key and known DB/graph passwords."""
+        if self.APP_ENV != "production":
+            return self
+
+        placeholder_fields = [
+            name
+            for name in (
+                "APP_SECRET_KEY",
+                "JWT_SECRET_KEY",
+                "POSTGRES_PASSWORD",
+                "NEO4J_PASSWORD",
+            )
+            if getattr(self, name) == _PLACEHOLDER_SECRET
+        ]
+        if placeholder_fields:
+            raise ValueError(
+                "APP_ENV=production but these settings are still set to the "
+                f"development placeholder value {_PLACEHOLDER_SECRET!r}: "
+                f"{', '.join(placeholder_fields)}. Set real values via "
+                "environment variables or a secrets manager before starting."
+            )
+        return self
 
 
 @lru_cache

@@ -15,7 +15,13 @@ services:
 
   postgres:
     restart: always
-    ports: []   # do not expose the DB port to the host in production
+    # `!override` is required here: Compose *merges* (concatenates) `ports:`
+    # across -f files by default, it does not replace them — a plain
+    # `ports: []` silently has no effect and the base file's 5432:5432
+    # mapping stays published. Verified against docker-compose.yml + this
+    # file with `docker compose config`; without !override the DB port
+    # leaks to the host in "production" despite this comment saying it doesn't.
+    ports: !override []   # do not expose the DB port to the host in production
     deploy:
       resources:
         limits:
@@ -24,7 +30,9 @@ services:
 
   neo4j:
     restart: always
-    ports:
+    # !override so this replaces (not appends to) the base file's bolt+http
+    # port list — see the postgres comment above for why plain `ports:` merges.
+    ports: !override
       - "${NEO4J_HTTP_PORT:-7474}:7474"   # keep Browser access behind a VPN/firewall rule, not public
     deploy:
       resources:
@@ -36,9 +44,22 @@ services:
     build:
       target: production
     restart: always
+    # Not published to the host: the frontend's nginx already reverse-proxies
+    # /api/* to this service over the internal Docker network (see
+    # docker/frontend/nginx.conf), and with no authentication implemented
+    # yet (see README > Known limitations), the API shouldn't have a second,
+    # un-proxied public entry point. This also means /docs, /openapi.json,
+    # and /health are internal-only in production — reach them with
+    # `docker exec policysentinel-backend curl localhost:8000/health`, or
+    # add an nginx `location` for them if you want them public.
+    ports: !override []
     # No bind mount in production — the image is immutable; uploads/logs
-    # remain on named volumes only.
-    volumes:
+    # remain on named volumes only. !override is required: plain `volumes:`
+    # merges with (doesn't replace) the base file's list, so without it the
+    # dev bind mount `./backend:/app/backend` would still apply on top of
+    # the production image here too — shadowing the baked-in code with a
+    # host path that won't even exist on a real server.
+    volumes: !override
       - backend-uploads:/app/uploads
       - backend-logs:/app/logs
     environment:
@@ -63,9 +84,15 @@ services:
     build:
       target: production
     restart: always
-    ports:
+    # !override on both: see the postgres/backend comments above — plain
+    # `ports:`/`volumes:` merge with the base file's dev entries instead of
+    # replacing them, so without !override the container would end up with
+    # both 3000:3000 (a port nginx never listens on) and 80:80 published,
+    # and the dev source bind mount would still be layered on top of the
+    # built static image.
+    ports: !override
       - "${FRONTEND_PORT:-80}:80"   # nginx serves on 80 in the production image, not 3000
-    volumes: []   # no bind mount — static assets are baked into the image
+    volumes: !override []   # no bind mount — static assets are baked into the image
     deploy:
       # See note on backend.deploy.replicas above.
       replicas: 1

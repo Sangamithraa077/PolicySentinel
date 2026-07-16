@@ -77,7 +77,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      # Neo4j 5's cold start (no page cache warmed yet) took ~50s in testing
+      # on this machine — 30s left dependent services (backend) racing
+      # ahead and failing with "dependency failed to start: neo4j is
+      # unhealthy" even though neo4j came up fine moments later.
+      start_period: 75s
 
   # ---------------------------------------------------------------------
   # Backend — FastAPI (development target: hot reload)

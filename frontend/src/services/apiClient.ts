@@ -13,8 +13,16 @@ import axios from "axios";
  * see .env.example) — every backend route is mounted under
  * `settings.API_V1_PREFIX` (see backend/main.py), so callers append only
  * the resource path (`/policies`, `/clauses`, ...), never `/api/v1` again.
+ *
+ * `VITE_API_BASE_URL` is a Vite build-time value baked into the bundle by
+ * `vite build` — the production Docker image (docker/frontend/Dockerfile)
+ * never sets it, so without a fallback this would compile to `undefined`
+ * and every request would go out with no base URL at all. `/api/v1`
+ * matches nginx.conf's reverse proxy (`location /api/`), so the built
+ * bundle keeps working via a same-origin relative path in production,
+ * while local dev still gets the explicit absolute URL from `.env`.
  */
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 /**
  * Shared Axios instance for all backend REST calls. Feature-specific

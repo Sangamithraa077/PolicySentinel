@@ -75,7 +75,16 @@ ENV PATH="/opt/venv/bin:$PATH" \
 COPY --from=dependencies /opt/venv /opt/venv
 COPY backend/ backend/
 
+# /app/uploads and /app/logs must exist (owned by appuser) *before* the
+# named volumes in docker-compose.prod.yml are mounted over them — Docker
+# only carries an image path's ownership into a freshly-created named
+# volume if that path already existed in the image; otherwise the volume
+# is initialized owned by root, and this non-root user can't write to it
+# (verified: without this, the app crashes on startup with
+# `PermissionError: [Errno 13] Permission denied: '/app/logs/app.log'`,
+# taking every uvicorn worker down with it).
 RUN useradd --create-home --uid 1000 appuser \
+    && mkdir -p /app/uploads /app/logs \
     && chown -R appuser:appuser /app
 USER appuser
 

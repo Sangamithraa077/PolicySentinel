@@ -22,16 +22,25 @@ contradict each other, and drafts the fix.**
 
 ## Table of contents
 
-- [What it does](#what-it-does)
-- [Business impact](#business-impact)
+**Overview**
+- [What it does](#what-it-does) · [Business impact](#business-impact)
 - [Key features](#key-features)
 - [UI preview](#ui-preview)
+
+**Architecture**
 - [System architecture](#system-architecture)
+  - [Ingestion pipeline](#ingestion-pipeline) · [Graph schema](#graph-schema)
 - [Technology stack](#technology-stack)
 - [Project structure](#project-structure)
+
+**Running it**
 - [Getting started](#getting-started)
+  - [Docker Compose (recommended)](#option-a--docker-compose-recommended) · [Run natively](#option-b--run-natively)
 - [Configuration](#configuration)
 - [Development](#development)
+- [Deployment](#deployment)
+
+**Reference**
 - [API reference](#api-reference)
 - [Known limitations](#known-limitations)
 - [Roadmap](#roadmap)
@@ -389,6 +398,51 @@ pytest                       # unit + integration + e2e suites (see tests/backen
 alembic revision --autogenerate -m "..."   # new migration
 alembic upgrade head                        # apply pending migrations
 ```
+
+---
+
+## Deployment
+
+`docker-compose.prod.yml` is a single-host production overlay:
+
+```bash
+cp .env.example .env   # then set real values — see the checklist below
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker exec -w /app/backend policysentinel-backend alembic upgrade head
+```
+
+It was audited end-to-end against a real (non-placeholder) `.env` while writing this section,
+which surfaced and fixed four bugs that would otherwise have broken or exposed a real deployment:
+
+- **Config lists don't override, they merge.** Compose concatenates `ports:`/`volumes:` across
+  `-f` files instead of replacing them — so `docker-compose.prod.yml`'s `ports: []` on Postgres
+  silently had no effect, and Postgres's port, Neo4j's bolt port, and the frontend dev container's
+  bind mount were all still live in "production." Fixed with the Compose Spec's `!override` tag on
+  every list the prod overlay needs to replace.
+- **The production frontend build had no working API URL.** `VITE_API_BASE_URL` is a Vite
+  build-time value, but nothing sets it during `docker build`, so it compiled to `undefined` and
+  every request would have gone out with no base URL. Fixed by falling back to the relative
+  `/api/v1` path in `apiClient.ts`, which is what nginx's `/api/` reverse proxy already expects.
+- **The production image couldn't write its own log file.** It drops to a non-root user, but the
+  `backend-logs`/`backend-uploads` named volumes are created owned by root the first time Docker
+  mounts them over a path that didn't already exist in the image — crashing every worker on
+  startup with `PermissionError: .../app.log`. Fixed by pre-creating and `chown`-ing those
+  directories in the Dockerfile before the volume mount happens.
+- **Neo4j 5's cold start (~50s) exceeded the healthcheck's 30s grace period**, occasionally making
+  `docker compose up` give up on the backend with "dependency failed to start" even though Neo4j
+  came up fine seconds later. `start_period` raised to 75s.
+
+### Before going live, you still need to
+
+1. **Set real secrets.** `APP_SECRET_KEY`, `JWT_SECRET_KEY`, `POSTGRES_PASSWORD`, and
+   `NEO4J_PASSWORD` default to `changeme` in `.env.example`. The backend now refuses to start in
+   `APP_ENV=production` if any of them are still set to that value — but that's a safety net, not a
+   substitute for actually rotating them.
+2. **Decide about authentication.** There is none (see [Known limitations](#known-limitations)).
+   Don't put this on the open internet with real policy data until that's addressed.
+3. **Put TLS in front of it.** Nothing here terminates HTTPS; put a reverse proxy/load balancer
+   (or Cloudflare, etc.) in front of the frontend's port 80.
+4. **Point `CORS_ALLOWED_ORIGINS` at your real domain** — it defaults to `localhost` dev origins.
 
 ---
 
