@@ -16,16 +16,32 @@
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  --color-brand-50: oklch(0.97 0.02 250);
-  --color-brand-100: oklch(0.93 0.04 250);
-  --color-brand-500: oklch(0.55 0.18 250);
-  --color-brand-600: oklch(0.48 0.18 250);
-  --color-brand-700: oklch(0.4 0.16 250);
+  /* Violet/indigo accent — deliberately distinct from the generic SaaS
+     blue this used to be (hue 250). Kept as a single hue (300) across the
+     scale so every brand-* shade stays visually related. */
+  --color-brand-50: oklch(0.97 0.015 300);
+  --color-brand-100: oklch(0.93 0.04 300);
+  --color-brand-200: oklch(0.87 0.08 300);
+  --color-brand-500: oklch(0.55 0.22 300);
+  --color-brand-600: oklch(0.47 0.22 300);
+  --color-brand-700: oklch(0.39 0.19 300);
 
   --color-surface: oklch(1 0 0);
   --color-surface-muted: oklch(0.97 0 0);
   --color-border: oklch(0.9 0 0);
   --color-foreground: oklch(0.2 0 0);
+
+  /* Softer corners app-wide — every `rounded-md`/`rounded-lg`/`rounded-xl`
+     usage picks these up automatically since they're Tailwind v4's own
+     theme tokens, not a new custom scale. */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* A softer, more diffuse elevation than Tailwind's default `shadow-sm` —
+     every card across the app uses `shadow-sm`, so this alone gives the
+     whole UI a less flat feel without touching each page. */
+  --shadow-sm: 0 1px 3px rgba(15, 15, 25, 0.04), 0 6px 16px -4px rgba(15, 15, 25, 0.06);
 }
 
 /*

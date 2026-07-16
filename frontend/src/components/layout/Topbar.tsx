@@ -19,12 +19,12 @@ export function Topbar() {
   const hasActiveCompany = Boolean(identity.companyId);
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6 dark:border-neutral-800 dark:bg-neutral-900">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface/80 px-6 backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900/80">
       <div className="relative" ref={menuRef}>
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-surface-muted dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+          className="flex items-center gap-2 rounded-full border border-border bg-surface-muted/60 px-3.5 py-1.5 text-sm font-medium text-neutral-700 hover:bg-surface-muted dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-200 dark:hover:bg-neutral-800 transition-colors"
         >
           <Building2 className="h-4 w-4 text-brand-500" />
           {hasActiveCompany ? companyLabel(identity.companyId) : "All companies"}
@@ -32,7 +32,7 @@ export function Topbar() {
         </button>
 
         {open && (
-          <div className="absolute left-0 top-full z-20 mt-1.5 w-72 rounded-md border border-border bg-surface py-1.5 shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+          <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-xl border border-border bg-surface py-1.5 shadow-xl shadow-black/5 dark:border-neutral-700 dark:bg-neutral-900">
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
               Switch workspace
             </div>
@@ -89,7 +89,7 @@ export function Topbar() {
         type="button"
         onClick={toggleTheme}
         aria-label="Toggle color theme"
-        className="rounded-md p-2 text-neutral-500 transition-colors hover:bg-surface-muted hover:text-foreground dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+        className="rounded-full border border-border bg-surface-muted/60 p-2 text-neutral-500 transition-colors hover:bg-surface-muted hover:text-foreground dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
       >
         {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
       </button>
