@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ClauseViewerPage } from "@/pages/ClauseViewerPage";
@@ -16,12 +16,24 @@ import { AdvancedFindingsPage } from "@/pages/AdvancedFindingsPage";
 import { RegulatoryDashboardPage } from "@/pages/RegulatoryDashboardPage";
 import { KnowledgeGraphPage } from "@/pages/KnowledgeGraphPage";
 import { DemoModePage } from "@/pages/DemoModePage";
+import { useWorkspace } from "@/hooks/useWorkspace";
+
+/** Renders the dashboard, or redirects to the "Default landing page" set in
+ * Settings > Dashboard preferences, so returning users land where they
+ * actually work instead of always seeing the executive summary first. */
+function Home() {
+  const { preferences } = useWorkspace();
+  if (preferences.landingPage !== "/") {
+    return <Navigate to={preferences.landingPage} replace />;
+  }
+  return <DashboardPage />;
+}
 
 export function App() {
   return (
     <Routes>
       <Route element={<DashboardLayout />}>
-        <Route index element={<DashboardPage />} />
+        <Route index element={<Home />} />
         <Route path="executive-dashboard" element={<ExecutiveDashboardPage />} />
         <Route path="policies" element={<PoliciesPage />} />
         <Route path="upload" element={<UploadPage />} />

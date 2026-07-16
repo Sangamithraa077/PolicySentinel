@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Search, CheckCircle, RefreshCw, Layers, ShieldAlert, BadgeAlert } from "lucide-react";
+import { Loader2, Layers, ShieldAlert } from "lucide-react";
 
 import { usePolicies } from "@/hooks/usePolicies";
 import { useRelationships } from "@/hooks/useRelationships";

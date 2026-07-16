@@ -10,8 +10,7 @@
 /*
  * Basic theme tokens (Tailwind v4 CSS-first config — no tailwind.config.js
  * needed). Extend/adjust these as the real design system is built; this is
- * a minimal placeholder palette only. Dark-mode surface colors are applied
- * per-usage via dark: utilities rather than redefined here.
+ * a minimal placeholder palette only.
  */
 @theme {
   --font-sans:
@@ -27,6 +26,25 @@
   --color-surface-muted: oklch(0.97 0 0);
   --color-border: oklch(0.9 0 0);
   --color-foreground: oklch(0.2 0 0);
+}
+
+/*
+ * Dark-mode values for the tokens above. Most call sites also pair an
+ * explicit dark:* utility (e.g. `bg-surface dark:bg-neutral-900`) for
+ * finer per-component control, but several places across the app use the
+ * bare token alone (`text-foreground`, `bg-surface`, ...) with no dark:
+ * override — those rendered near-black-on-near-black in dark mode since
+ * the tokens themselves never changed value. Redefining them here fixes
+ * every such spot at once instead of hunting each one down individually.
+ * Values match the neutral-900/800/100 shades already used by the
+ * explicit dark: pairs elsewhere, so this doesn't change anything for
+ * components that already override per-usage.
+ */
+.dark {
+  --color-surface: oklch(0.205 0 0);
+  --color-surface-muted: oklch(0.269 0 0);
+  --color-border: oklch(0.269 0 0);
+  --color-foreground: oklch(0.97 0 0);
 }
 
 @layer base {

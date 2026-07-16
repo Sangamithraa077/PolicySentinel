@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "@/App";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { queryClient } from "@/services/queryClient";
 import "@/styles/globals.css";
 
@@ -12,9 +13,11 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <WorkspaceProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </WorkspaceProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

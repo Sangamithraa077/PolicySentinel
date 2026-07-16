@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, ShieldCheck, AlertOctagon, HelpCircle, FileText, CheckCircle2, ChevronRight, BarChart3, Filter } from "lucide-react";
+import { Loader2, ShieldCheck, AlertOctagon, ChevronRight, BarChart3, Filter } from "lucide-react";
 
 import { usePolicies } from "@/hooks/usePolicies";
 import { useRegulatoryMappings, usePolicyHealthScore, useRegulatoryFrameworks } from "@/hooks/useRegulatoryMappings";

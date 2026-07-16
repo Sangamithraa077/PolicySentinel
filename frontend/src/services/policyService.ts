@@ -42,6 +42,7 @@ export async function uploadPolicyDocument(
 }
 
 export interface ListPoliciesParams {
+  companyId?: string;
   limit?: number;
   offset?: number;
 }
@@ -49,6 +50,7 @@ export interface ListPoliciesParams {
 export async function listPolicies(params: ListPoliciesParams = {}): Promise<PolicyListResponse> {
   const response = await apiClient.get<PolicyListResponse>("/policies", {
     params: {
+      company_id: params.companyId || undefined,
       limit: params.limit ?? 20,
       offset: params.offset ?? 0,
     },

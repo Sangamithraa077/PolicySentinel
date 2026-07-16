@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { AlertCircle, Loader2, UploadCloud } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { ProgressBar } from "@/components/common/ProgressBar";
 import { ToastStack } from "@/components/common/Toast";
@@ -7,6 +8,7 @@ import { PolicyDropzone } from "@/components/upload/PolicyDropzone";
 import { UploadedPoliciesList } from "@/components/upload/UploadedPoliciesList";
 import { usePolicyUpload } from "@/hooks/usePolicyUpload";
 import { useToasts } from "@/hooks/useToasts";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { extractApiErrorMessage } from "@/utils/apiError";
 import { isValidUuid, validateUploadFile } from "@/utils/validateUploadFile";
 
@@ -19,9 +21,10 @@ interface FieldErrors {
 }
 
 export function UploadPage() {
+  const { identity, setIdentity } = useWorkspace();
   const [file, setFile] = useState<File | null>(null);
-  const [companyId, setCompanyId] = useState("");
-  const [uploadedByUserId, setUploadedByUserId] = useState("");
+  const [companyId, setCompanyId] = useState(identity.companyId);
+  const [uploadedByUserId, setUploadedByUserId] = useState(identity.userId);
   const [policyTitle, setPolicyTitle] = useState("");
   const [versionNumber, setVersionNumber] = useState("1");
   const [description, setDescription] = useState("");
@@ -83,6 +86,7 @@ export function UploadPage() {
       {
         onSuccess: (result) => {
           pushToast("success", `"${result.policy_title}" uploaded successfully.`);
+          setIdentity({ companyId: companyId.trim(), userId: uploadedByUserId.trim() });
           setFile(null);
           setPolicyTitle("");
           setDescription("");
@@ -151,7 +155,7 @@ export function UploadPage() {
 
           <p className="-mt-3 text-xs text-neutral-400">
             Company and uploader are plain ID fields for now — they'll come from your session once
-            sign-in exists.
+            sign-in exists. Save them once in <Link to="/settings" className="underline hover:text-neutral-600 dark:hover:text-neutral-300">Settings</Link> to pre-fill this form going forward.
           </p>
 
           <Field label="Policy title" error={fieldErrors.policyTitle}>

@@ -8,7 +8,6 @@ import {
   Upload,
   AlertTriangle,
   Sparkles,
-  Activity,
   FileWarning,
   Share2,
   Play,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Search, RefreshCw, FileWarning, HelpCircle, ShieldCheck, Clock, ShieldAlert } from "lucide-react";
+import { Loader2, FileWarning, ShieldCheck, Clock } from "lucide-react";
 
 import { usePolicies } from "@/hooks/usePolicies";
 import { useFindings } from "@/hooks/useFindings";
@@ -21,19 +21,6 @@ export function AdvancedFindingsPage() {
     policyId: selectedPolicyId || undefined,
     findingType: selectedTab === "all" ? undefined : selectedTab,
   });
-
-  const getTabBadgeColor = (tab: string) => {
-    switch (tab) {
-      case "temporal":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
-      case "strength":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
-      case "stale":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-      default:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
-    }
-  };
 
   const allItems = allFindingsQuery.data?.items ?? [];
   const totalCount = allItems.length;

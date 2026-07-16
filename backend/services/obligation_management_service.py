@@ -37,7 +37,8 @@ class ObligationManagementService:
         if modality is not None:
             conditions.append(Obligation.modality.ilike(modality))
         if keyword:
-            pattern = f"%{keyword.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')}%"
+            escaped_keyword = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{escaped_keyword}%"
             conditions.append(
                 or_(
                     Obligation.subject.ilike(pattern, escape="\\"),

@@ -1,21 +1,23 @@
 import { useState } from "react";
-import { 
+import {
   FileText, Shield, AlertTriangle, CheckCircle2, Sparkles, List,
-  TrendingDown, TrendingUp, Activity, ArrowRight, Loader2, RefreshCw, FileDown 
+  TrendingDown, TrendingUp, Activity, Loader2, RefreshCw, FileDown
 } from "lucide-react";
 
 import { usePolicies } from "@/hooks/usePolicies";
 import { useExecutiveSummary, useComplianceAuditLogs } from "@/hooks/useComplianceDashboard";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { API_BASE_URL } from "@/services/apiClient";
 
 export function ExecutiveDashboardPage() {
+  const { identity, preferences } = useWorkspace();
   const [currentPage, setCurrentPage] = useState(1);
-  const limit = 10;
+  const limit = preferences.rowsPerPage;
   const offset = (currentPage - 1) * limit;
 
-  // 1. Fetch policies to resolve active company context
+  // 1. Fetch policies, scoped to the active company (Settings > Company directory)
   const policiesQuery = usePolicies();
-  const companyId = policiesQuery.data?.items?.[0]?.company_id;
+  const companyId = identity.companyId || policiesQuery.data?.items?.[0]?.company_id;
 
   // 2. Fetch Executive compliance metrics & risk score
   const summaryQuery = useExecutiveSummary(companyId);

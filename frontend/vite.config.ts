@@ -15,5 +15,13 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
+    // Docker Desktop bind mounts (esp. from a Windows host) don't reliably
+    // forward inotify events into the container, so chokidar's default
+    // watcher silently misses file edits — polling is the standard
+    // workaround for dev servers running against a bind-mounted volume.
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
   },
 });

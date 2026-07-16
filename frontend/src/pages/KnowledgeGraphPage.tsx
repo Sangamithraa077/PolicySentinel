@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Share2, Search, Info, ZoomIn, ZoomOut, RotateCcw, AlertTriangle, HelpCircle } from "lucide-react";
+import { Loader2, Share2, Info, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { usePolicies } from "@/hooks/usePolicies";
 import { apiClient } from "@/services/apiClient";
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +37,6 @@ interface ImpactAnalysisData {
 
 export function KnowledgeGraphPage() {
   const [selectedPolicyId, setSelectedPolicyId] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedNode, setSelectedNode] = useState<GraphNodeData | null>(null);
 
   // Zoom / Pan State

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, AlertTriangle, Search, CheckCircle, Eye, RefreshCw } from "lucide-react";
+import { Loader2, AlertTriangle, Search, CheckCircle, Eye } from "lucide-react";
 
 import { usePolicies } from "@/hooks/usePolicies";
 import { useConflicts, useUpdateConflictStatus } from "@/hooks/useConflicts";
@@ -108,6 +108,18 @@ export function ConflictDashboardPage() {
                 ))}
               </select>
             )}
+
+            {/* Conflict Type Filter */}
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 sm:w-36"
+            >
+              <option value="">All Types</option>
+              <option value="duplicate">Duplicate</option>
+              <option value="contradiction">Contradiction</option>
+              <option value="missing">Missing</option>
+            </select>
 
             {/* Severity Filter */}
             <select
