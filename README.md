@@ -8,7 +8,7 @@
 contradict each other, and drafts the fix.**
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
@@ -64,9 +64,11 @@ Nobody notices until an audit or an incident forces the question.
 
 PolicySentinel automates the part a compliance team would otherwise do by hand:
 
-1. **Upload** a policy document (PDF, DOCX, or plain text).
-2. It's **automatically parsed** into a hierarchy of clauses, and Google Gemini extracts each
-   clause's compliance obligation (who must do what, how strongly, under what conditions).
+1. **Upload** a policy document (PDF, DOCX, or plain text — all three are accepted and stored).
+2. **PDF uploads** are **automatically parsed** into a hierarchy of clauses, and Google Gemini
+   extracts each clause's compliance obligation (who must do what, how strongly, under what
+   conditions). DOCX/plain-text uploads are stored and downloadable today, but don't yet trigger
+   this pipeline — see [Known limitations](#known-limitations).
 3. Those obligations are **compared against every other policy** the company has on file.
 4. Real conflicts — contradictions, duplicates, weakened requirements, mismatched deadlines — are
    **flagged with an AI-drafted recommendation**, ready for a compliance officer to accept or
@@ -206,7 +208,9 @@ graph TD
 
 ### Ingestion pipeline
 
-Uploading a policy document runs this pipeline synchronously, end to end, in a single request:
+Uploading a **PDF** runs this pipeline synchronously, end to end, in a single request. DOCX and
+plain-text uploads are stored (and downloadable) but stop there — none of the steps below currently
+run for them — see [Known limitations](#known-limitations).
 
 ```mermaid
 flowchart TD
@@ -492,7 +496,7 @@ All routes are mounted under `/api/v1`. None currently require authentication (s
 | Resource | Routes |
 | :--- | :--- |
 | **Policies** | `GET /policies`, `GET /policies/{id}`, `DELETE /policies/{id}`, `GET /policies/{id}/download` |
-| **Uploads** | `POST /uploads/policies` — stores the document and runs the full ingestion pipeline (extraction → segmentation → obligation extraction → comparison → conflict detection → recommendations → Neo4j sync) synchronously. |
+| **Uploads** | `POST /uploads/policies` — stores the document; for `.pdf` uploads only, also runs the full ingestion pipeline (extraction → segmentation → obligation extraction → comparison → conflict detection → recommendations → Neo4j sync) synchronously. `.docx`/`.txt`/`.md` uploads are stored only — see [Known limitations](#known-limitations). |
 | **Clauses** | `GET /clauses`, `GET /clauses/{id}` |
 | **Obligations** | `GET /obligations`, `GET /obligations/{id}` |
 | **Comparison** | `POST /comparison/compare` — on-demand semantic comparison between two policy versions. |
@@ -525,6 +529,11 @@ Being upfront about the gap between what's documented as intended and what's act
   falls back to a generic rule-based mock, which tends to produce near-identical obligation text for
   unrelated clauses — you'll see a wave of low-severity "duplicate" conflicts instead of the richer
   mix (modality shifts, temporal mismatches) the pipeline is capable of with real extraction.
+- **DOCX/plain-text uploads skip the AI pipeline.** `ALLOWED_EXTENSIONS` accepts `.pdf`, `.docx`,
+  `.txt`, and `.md`, and all four are stored and downloadable — but text extraction, clause
+  segmentation, obligation extraction, comparison, and conflict detection are all currently gated on
+  `validated.extension == ".pdf"` (`services/persist_policy_upload_service.py`). Uploading a `.docx`
+  or `.txt` policy today creates the Policy/PolicyVersion record and nothing else.
 - **No company directory endpoint.** The frontend's workspace/company switcher discovers companies
   by grouping existing policies client-side, since there's no `/companies` API — company display
   names are user-assigned nicknames stored in the browser, not server-side data.
