@@ -10,6 +10,7 @@ from backend.models.clause import Clause
 from backend.models.clause_regulatory_mapping import ClauseRegulatoryMapping
 from backend.models.company import Company
 from backend.models.department import Department
+from backend.models.file_blob import FileBlob
 from backend.models.finding import Finding
 from backend.models.finding_clause_link import FindingClauseLink
 from backend.models.obligation import Obligation
@@ -42,4 +43,5 @@ __all__ = [
     "FindingClauseLink",
     "AuditLog",
     "RegulatoryMapping",
+    "FileBlob",
 ]

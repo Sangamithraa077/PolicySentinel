@@ -2,22 +2,25 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi import Depends
 
 from backend.api.dependencies.common import get_app_settings
 from backend.api.dependencies.database import DbSession
 from backend.config.settings import Settings
 from backend.domain.interfaces.file_storage_interface import FileStorageInterface
-from backend.repositories.local_file_storage_repository import LocalFileStorageRepository
+from backend.repositories.postgres_file_storage_repository import PostgresFileStorageRepository
 from backend.services.file_storage_service import FileStorageService
 from backend.services.persist_policy_upload_service import PersistPolicyUploadService
 from backend.services.validate_policy_document_service import ValidatePolicyDocumentService
 
 
-def get_file_storage(settings: Settings = Depends(get_app_settings)) -> FileStorageInterface:
-    return LocalFileStorageRepository(Path(settings.UPLOAD_DIR))
+def get_file_storage(db: DbSession) -> FileStorageInterface:
+    # Postgres-backed, not `LocalFileStorageRepository` — Render's free-tier
+    # web services have ephemeral local disk, which loses every uploaded
+    # file on the next deploy/restart (see models/file_blob.py). Shares
+    # `db` with whatever else the request already uses, so a file write
+    # and its owning Policy/PolicyVersion rows commit/roll back together.
+    return PostgresFileStorageRepository(db)
 
 
 def get_file_storage_service(
