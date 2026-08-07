@@ -16,6 +16,14 @@ contradict each other, and drafts the fix.**
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-1A73E8?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 
+### 🔗 Live deployment
+
+| | |
+| :--- | :--- |
+| **Frontend** | [policysentinel-frontend.onrender.com](https://policysentinel-frontend.onrender.com) |
+| **Backend API** | [policysentinel-backend.onrender.com](https://policysentinel-backend.onrender.com) |
+| **API docs (Swagger)** | [policysentinel-backend.onrender.com/docs](https://policysentinel-backend.onrender.com/docs) |
+
 </div>
 
 ---
@@ -39,6 +47,7 @@ contradict each other, and drafts the fix.**
 - [Configuration](#configuration)
 - [Development](#development)
 - [Deployment](#deployment)
+  - [Current live deployment](#current-live-deployment) · [Self-hosted (Docker Compose)](#self-hosted-docker-compose)
 
 **Reference**
 - [API reference](#api-reference)
@@ -173,9 +182,8 @@ graph TD
     end
 
     subgraph Persistent_Storage["Persistent Storage"]
-        PG["PostgreSQL (policies, clauses, obligations, audit logs)"]:::db
+        PG["PostgreSQL (policies, clauses, obligations, audit logs, source document bytes)"]:::db
         Neo4j["Neo4j (structural + regulatory relationships)"]:::db
-        Disk["Local disk storage (source documents)"]:::db
     end
 
     subgraph External_Services["AI Services"]
@@ -189,9 +197,8 @@ graph TD
     API -->|4. Compare obligations| Compare
     API -->|5. Detect conflicts| Conflict
 
-    API -->|Read/write| PG
+    API -->|Read/write data + files| PG
     API -->|Sync graph| Neo4j
-    API -->|Store files| Disk
 
     Query --> UI
     Graph --> UI
@@ -375,7 +382,8 @@ application are:
 | `DATABASE_URL` / `POSTGRES_*` | PostgreSQL connection. |
 | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Neo4j connection. |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | Google Gemini access. Extraction/comparison silently falls back to a rule-based mock if unset. |
-| `UPLOAD_DIR`, `MAX_UPLOAD_SIZE_MB` | Local policy-document storage. |
+| `MAX_UPLOAD_SIZE_MB` | Upload size limit. |
+| `UPLOAD_DIR` | Only used by `LocalFileStorageRepository`, an alternate `FileStorageInterface` implementation not wired in by default. Uploaded document **bytes are stored in Postgres** (`stored_files` table) by default — see [Current live deployment](#current-live-deployment). |
 | `CORS_ALLOWED_ORIGINS` | Origins the API will accept requests from. |
 | `VITE_API_BASE_URL` | Base URL the frontend calls (includes the `/api/v1` prefix). |
 
@@ -402,6 +410,37 @@ alembic upgrade head                        # apply pending migrations
 ---
 
 ## Deployment
+
+### Current live deployment
+
+The links at the top of this README point at a real deployment, entirely on free tiers:
+
+| Component | Platform |
+| :--- | :--- |
+| Frontend | [Render](https://render.com) (static build) |
+| Backend | [Render](https://render.com) (Docker web service) |
+| PostgreSQL | [Neon](https://neon.tech) |
+| Neo4j | [Neo4j AuraDB Free](https://neo4j.com/cloud/aura-free/) |
+
+Getting this actually working end-to-end surfaced two bugs that a "the health check passes" smoke
+test wouldn't catch — both live in production now, listed here because the fix for one is directly
+why `UPLOAD_DIR` no longer describes the default storage backend, above:
+
+- **CORS silently dropped every frontend request.** The backend's `CORS_ALLOWED_ORIGINS` only had
+  `localhost` dev origins — Render's deployed frontend origin was never added. Every API response
+  still came back `200`, just missing `Access-Control-Allow-Origin`, so the browser discarded it
+  before any frontend code saw it. No error in the backend logs, no obvious signal beyond "the
+  frontend can't load anything." Fixed by setting `CORS_ALLOWED_ORIGINS` to the deployed frontend's
+  exact origin in Render's dashboard.
+- **Uploaded files didn't survive a redeploy.** `LocalFileStorageRepository` wrote to local disk,
+  and Render's free-tier web services have ephemeral disk — wiped on every deploy. The `Policy`/
+  `PolicyVersion` rows survived (they're in Postgres), so the app looked fine until someone tried to
+  download a file uploaded before the last deploy, which 500'd with "Stored file not found." Fixed
+  by adding `PostgresFileStorageRepository` (a second implementation of the same
+  `FileStorageInterface` port) and storing file bytes in a `stored_files` table instead — no
+  additional paid infrastructure required.
+
+### Self-hosted (Docker Compose)
 
 `docker-compose.prod.yml` is a single-host production overlay:
 
