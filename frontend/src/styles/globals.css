@@ -8,11 +8,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Self-hosted display face — see visual-identity-concept for the full
- * rationale. Two static weights only (no full variable font) to keep the
- * payload small; hierarchy beyond these two leans on size, not more
- * weights. Self-hosted rather than a Google Fonts <link> so the app has
- * no third-party font request at all.
+ * Self-hosted display face — Fraunces, an institutional serif with an
+ * ink-trap character, used for headings (see the h1/h2/h3 rule below).
+ * Two static weights only (no full variable font) to keep the payload
+ * small; hierarchy beyond these two leans on size, not more weights.
+ * Self-hosted rather than a Google Fonts <link> so the app has no
+ * third-party font request at all.
  */
 @font-face {
   font-family: "Fraunces";
@@ -33,10 +34,11 @@
  * Design tokens (Tailwind v4 CSS-first config — no tailwind.config.js
  * needed). Ink/paper/verdigris system: an institutional palette grounded
  * in the product's own subject matter (compliance documents, ledgers,
- * seals) rather than a generic SaaS blue/violet. Every color below is a
- * deliberate, named choice — see docs/design/visual-identity-concept for
- * the full rationale and the CVD-safety validation each one was run
- * through.
+ * seals) rather than a generic SaaS blue/violet. Status/severity colors
+ * (conflict severity, event badges) intentionally stay on Tailwind's own
+ * red/amber/green/orange scale rather than a custom token — see
+ * ExecutiveDashboardPage.tsx's getRiskLevelBadgeClass/getEventBadgeClass —
+ * so they never collide with this accent if the accent hue changes later.
  */
 @theme {
   --font-sans:
@@ -45,16 +47,23 @@
 
   /* Verdigris — patina on aged bronze hardware (a ledger clasp, a seal).
      The one accent; carries every interactive and focus state. Replaces
-     the previous violet/indigo brand-* scale (hue 300) one-for-one, so
-     every existing bg-brand, text-brand, and border-brand usage across
-     the app repaints automatically — nothing below this comment needed
-     to change in any component. */
+     the previous violet/indigo brand-* scale (hue 300), so every existing
+     bg-brand, text-brand, and border-brand usage across the app repaints
+     automatically. Full 50-900 scale, not just the 50/100/200/500/600/700
+     steps the old scale had — those six were the only ones actually
+     defined before, so bg-brand-300/400/800/900 silently rendered no
+     color anywhere they were already used (e.g. Sidebar's active nav
+     icon). Fixed here rather than left as-is. */
   --color-brand-50: #e4f0ee;
   --color-brand-100: #c7e2dd;
   --color-brand-200: #9bc9c0;
+  --color-brand-300: #6ba99a;
+  --color-brand-400: #2e8d78;
   --color-brand-500: #17836e;
   --color-brand-600: #0e7561;
   --color-brand-700: #0b5c4c;
+  --color-brand-800: #094a3d;
+  --color-brand-900: #073b31;
 
   /* A second, rarer accent — reserved for exactly one thing across the
      app: marking AI-drafted content (a recommendation, an extracted
@@ -99,9 +108,13 @@
   --color-brand-50: #17322c;
   --color-brand-100: #1c3e36;
   --color-brand-200: #275249;
+  --color-brand-300: #3a7e6d;
+  --color-brand-400: #6bbfae;
   --color-brand-500: #5fb3a3;
   --color-brand-600: #3d9c89;
   --color-brand-700: #5fb3a3;
+  --color-brand-800: #0f241f;
+  --color-brand-900: #0a1a16;
 
   --color-accent-ai: #c99a4c;
   --color-accent-ai-tint: #332918;
