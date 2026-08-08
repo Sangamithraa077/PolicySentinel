@@ -21,7 +21,7 @@
 
 ---
 
-## 📚 Contents
+## Contents
 
 <table>
 <tr>
@@ -70,9 +70,9 @@ It's not a document store. It reads and reasons about what it stores.
 
 | | |
 | :--- | :--- |
-| ⏱️ **Audit prep** | Weeks of manual cross-referencing → minutes of automated mapping. |
-| ⚠️ **Risk** | Contradictions surface the moment a policy is uploaded, not during an audit. |
-| 🤝 **M&A integration** | Overlaps and gaps between two companies' policy sets, instantly. |
+| **Audit prep** | Weeks of manual cross-referencing → minutes of automated mapping. |
+| **Risk** | Contradictions surface the moment a policy is uploaded, not during an audit. |
+| **M&A integration** | Overlaps and gaps between two companies' policy sets, instantly. |
 
 ---
 
@@ -245,7 +245,7 @@ PolicySentinel/
 
 ## 🚀 Getting started
 
-### 🐳 Docker Compose (recommended)
+### Docker Compose (recommended)
 
 ```bash
 git clone <this-repository>
@@ -273,7 +273,7 @@ docker exec -w /app policysentinel-backend python -m scripts.setup.reset_db_clea
 
 Then follow [DEMO.md](DEMO.md) for a guided walkthrough.
 
-### 🖥️ Run natively
+### Run natively
 
 ```bash
 # Backend
@@ -334,7 +334,7 @@ alembic upgrade head                         # apply pending migrations
 
 ## ☁️ Deployment
 
-### 🌐 Live, right now
+### Live, right now
 
 Entirely on free tiers:
 
@@ -351,7 +351,7 @@ Getting this working end-to-end surfaced two bugs a passing health check wouldn'
 - **Uploads didn't survive a redeploy.** Files went to local disk, and Render's free tier wipes it on every deploy — the `Policy` row survived (it's in Postgres), the file didn't. Fixed by storing file bytes in Postgres instead (`stored_files` table), no extra infrastructure required.
 
 <details>
-<summary><strong>🐳 Self-hosted (Docker Compose)</strong></summary>
+<summary><strong>Self-hosted (Docker Compose)</strong></summary>
 <br>
 
 ```bash
@@ -369,7 +369,7 @@ Audited end-to-end against a real `.env`, which surfaced four bugs:
 
 </details>
 
-### ✅ Before going live, you still need to
+### Before going live, you still need to
 
 1. **Rotate the secrets.** `APP_SECRET_KEY`, `JWT_SECRET_KEY`, `POSTGRES_PASSWORD`, `NEO4J_PASSWORD` default to `changeme`. The backend refuses to start in production with any of them still set — that's a safety net, not a substitute for rotating them.
 2. **Add authentication.** There is none yet — see [Known limitations](#known-limitations). Don't expose this with real policy data until that's addressed.
@@ -425,6 +425,7 @@ MIT — see [LICENSE](LICENSE).
 
 <div align="center">
 
-*Built so the contradiction gets found before the auditor does.*
+*Read closely. Built carefully.*<br>
+*So the contradiction gets found before the auditor does.* ❤️
 
 </div>
