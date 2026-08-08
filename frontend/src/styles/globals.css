@@ -8,59 +8,108 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Basic theme tokens (Tailwind v4 CSS-first config — no tailwind.config.js
- * needed). Extend/adjust these as the real design system is built; this is
- * a minimal placeholder palette only.
+ * Self-hosted display face — see visual-identity-concept for the full
+ * rationale. Two static weights only (no full variable font) to keep the
+ * payload small; hierarchy beyond these two leans on size, not more
+ * weights. Self-hosted rather than a Google Fonts <link> so the app has
+ * no third-party font request at all.
+ */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/fraunces-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/fraunces-700.woff2") format("woff2");
+}
+
+/*
+ * Design tokens (Tailwind v4 CSS-first config — no tailwind.config.js
+ * needed). Ink/paper/verdigris system: an institutional palette grounded
+ * in the product's own subject matter (compliance documents, ledgers,
+ * seals) rather than a generic SaaS blue/violet. Every color below is a
+ * deliberate, named choice — see docs/design/visual-identity-concept for
+ * the full rationale and the CVD-safety validation each one was run
+ * through.
  */
 @theme {
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
 
-  /* Violet/indigo accent — deliberately distinct from the generic SaaS
-     blue this used to be (hue 250). Kept as a single hue (300) across the
-     scale so every brand-* shade stays visually related. */
-  --color-brand-50: oklch(0.97 0.015 300);
-  --color-brand-100: oklch(0.93 0.04 300);
-  --color-brand-200: oklch(0.87 0.08 300);
-  --color-brand-500: oklch(0.55 0.22 300);
-  --color-brand-600: oklch(0.47 0.22 300);
-  --color-brand-700: oklch(0.39 0.19 300);
+  /* Verdigris — patina on aged bronze hardware (a ledger clasp, a seal).
+     The one accent; carries every interactive and focus state. Replaces
+     the previous violet/indigo brand-* scale (hue 300) one-for-one, so
+     every existing bg-brand, text-brand, and border-brand usage across
+     the app repaints automatically — nothing below this comment needed
+     to change in any component. */
+  --color-brand-50: #e4f0ee;
+  --color-brand-100: #c7e2dd;
+  --color-brand-200: #9bc9c0;
+  --color-brand-500: #17836e;
+  --color-brand-600: #0e7561;
+  --color-brand-700: #0b5c4c;
 
-  --color-surface: oklch(1 0 0);
-  --color-surface-muted: oklch(0.97 0 0);
-  --color-border: oklch(0.9 0 0);
-  --color-foreground: oklch(0.2 0 0);
+  /* A second, rarer accent — reserved for exactly one thing across the
+     app: marking AI-drafted content (a recommendation, an extracted
+     obligation). A stamp, not a competing accent. Not used by any
+     existing component yet; available as bg-accent-ai / text-accent-ai
+     for the next one that needs it. */
+  --color-accent-ai: #a9762c;
+  --color-accent-ai-tint: #f1e5cc;
 
-  /* Softer corners app-wide — every `rounded-md`/`rounded-lg`/`rounded-xl`
-     usage picks these up automatically since they're Tailwind v4's own
-     theme tokens, not a new custom scale. */
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  --color-surface: #fcfcfa;
+  --color-surface-muted: #f5f5f1;
+  --color-border: #dcdcd3;
+  --color-foreground: #14181f;
 
-  /* A softer, more diffuse elevation than Tailwind's default `shadow-sm` —
-     every card across the app uses `shadow-sm`, so this alone gives the
-     whole UI a less flat feel without touching each page. */
-  --shadow-sm: 0 1px 3px rgba(15, 15, 25, 0.04), 0 6px 16px -4px rgba(15, 15, 25, 0.06);
+  /* Short of the rounded-lg-everywhere default on purpose — corners read
+     as trimmed paper, not soft plastic. Every rounded-md/lg/xl usage
+     across the app picks these up automatically, same mechanism as
+     brand-* above. */
+  --radius-md: 0.375rem;
+  --radius-lg: 0.4375rem;
+  --radius-xl: 0.5rem;
+
+  /* Hairline borders do most of the separating in this system; shadow is
+     reserved for things that actually float (a menu, a modal) rather than
+     every card. Kept subtle rather than removed outright, since shadow-sm
+     is also relied on by real floating elements this pass didn't audit
+     component-by-component. */
+  --shadow-sm: 0 1px 2px rgba(20, 24, 31, 0.04), 0 1px 1px rgba(20, 24, 31, 0.03);
 }
 
 /*
- * Dark-mode values for the tokens above. Most call sites also pair an
- * explicit dark:* utility (e.g. `bg-surface dark:bg-neutral-900`) for
- * finer per-component control, but several places across the app use the
- * bare token alone (`text-foreground`, `bg-surface`, ...) with no dark:
- * override — those rendered near-black-on-near-black in dark mode since
- * the tokens themselves never changed value. Redefining them here fixes
- * every such spot at once instead of hunting each one down individually.
- * Values match the neutral-900/800/100 shades already used by the
- * explicit dark: pairs elsewhere, so this doesn't change anything for
- * components that already override per-usage.
+ * Dark-mode token values. Most call sites also pair an explicit dark:*
+ * utility (e.g. `bg-surface dark:bg-neutral-900`) for finer per-component
+ * control, but several places across the app use the bare token alone
+ * with no dark: override — redefining the tokens here fixes every such
+ * spot at once. Verdigris and the AI-accent both get their own dark
+ * values rather than reusing the light ones: each was independently
+ * validated for contrast against the dark surface below (light-mode
+ * verdigris fails a contrast a dark background wants).
  */
 .dark {
-  --color-surface: oklch(0.205 0 0);
-  --color-surface-muted: oklch(0.269 0 0);
-  --color-border: oklch(0.269 0 0);
-  --color-foreground: oklch(0.97 0 0);
+  --color-brand-50: #17322c;
+  --color-brand-100: #1c3e36;
+  --color-brand-200: #275249;
+  --color-brand-500: #5fb3a3;
+  --color-brand-600: #3d9c89;
+  --color-brand-700: #5fb3a3;
+
+  --color-accent-ai: #c99a4c;
+  --color-accent-ai-tint: #332918;
+
+  --color-surface: #1a2029;
+  --color-surface-muted: #10141a;
+  --color-border: #2b3440;
+  --color-foreground: #eef0ee;
 }
 
 @layer base {
@@ -70,6 +119,17 @@
 
   body {
     @apply bg-neutral-50 text-foreground antialiased transition-colors dark:bg-neutral-950 dark:text-neutral-100;
+  }
+
+  /* Every page/section heading in the app shifts to the display face
+     automatically — this is the one sweeping, low-risk way to apply it
+     without hand-editing each page; see UploadPage.tsx etc. for the
+     h1/h2 markup this targets. Stat-number spans (text-3xl font-bold)
+     are a separate, smaller pattern not swept up here — left in Inter
+     Bold for now rather than matched by fragile utility-class selectors. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 
   /* Custom Professional Scrollbar styling */
@@ -88,19 +148,5 @@
 
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-neutral-300 dark:bg-neutral-700;
-  }
-
-  /* Glassmorphism utility */
-  .glass-panel {
-    @apply bg-surface/80 backdrop-blur-md border border-border/60 dark:bg-neutral-900/80 dark:border-neutral-800/60;
-  }
-
-  /* Premium Box Shadows */
-  .premium-shadow {
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03);
-  }
-
-  .premium-shadow-hover:hover {
-    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
   }
 }
