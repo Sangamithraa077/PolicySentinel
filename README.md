@@ -23,7 +23,23 @@
 
 ## Contents
 
-[What it does](#what-it-does) · [Features](#features) · [Architecture](#architecture) · [Tech stack](#tech-stack) · [Project structure](#project-structure) · [Getting started](#getting-started) · [Configuration](#configuration) · [Development](#development) · [Deployment](#deployment) · [API reference](#api-reference) · [Known limitations](#known-limitations)
+<table>
+<tr><td>
+
+- [What it does](#what-it-does)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Deployment](#deployment)
+- [API reference](#api-reference)
+- [Known limitations](#known-limitations)
+
+</td></tr>
+</table>
 
 ---
 
@@ -398,3 +414,11 @@ MIT — see [LICENSE](LICENSE).
 ## Acknowledgements
 
 [Google AI Studio](https://ai.google.dev/) · [FastAPI](https://fastapi.tiangolo.com) · [Neo4j](https://neo4j.com) · [PyMuPDF](https://pymupdf.readthedocs.io/)
+
+---
+
+<div align="center">
+
+*Built so the contradiction gets found before the auditor does.*
+
+</div>
