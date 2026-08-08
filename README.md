@@ -52,7 +52,6 @@ contradict each other, and drafts the fix.**
 **Reference**
 - [API reference](#api-reference)
 - [Known limitations](#known-limitations)
-- [Roadmap](#roadmap)
 
 ---
 
@@ -537,23 +536,12 @@ Being upfront about the gap between what's documented as intended and what's act
 - **No company directory endpoint.** The frontend's workspace/company switcher discovers companies
   by grouping existing policies client-side, since there's no `/companies` API — company display
   names are user-assigned nicknames stored in the browser, not server-side data.
-- **No `LICENSE` file is committed yet**, despite the MIT intent below.
-
----
-
-## Roadmap
-
-- [ ] Wire up JWT authentication (`python-jose` dependency is already present) and role-based access control.
-- [ ] Implement the Z3-backed formal reasoning engine for provable (not just inferred) contradictions.
-- [ ] Add a `/companies` endpoint so company names don't rely on client-side nicknames.
-- [ ] Real-time regulatory-framework updates (scraping GDPR/RBI registries instead of a static seed).
-- [ ] Side-by-side redline diffing between policy version drafts.
 
 ---
 
 ## License
 
-Intended to be MIT-licensed; a `LICENSE` file has not yet been added to this repository.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
