@@ -21,29 +21,35 @@
 
 ---
 
-## Contents
+## 📚 Contents
 
 <table>
-<tr><td>
+<tr>
+<td valign="top" width="50%">
 
-- [What it does](#what-it-does)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Tech stack](#tech-stack)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Deployment](#deployment)
-- [API reference](#api-reference)
-- [Known limitations](#known-limitations)
+- 🎯 [What it does](#what-it-does)
+- ✨ [Features](#features)
+- 🏗️ [Architecture](#architecture)
+- 🧰 [Tech stack](#tech-stack)
+- 🗂️ [Project structure](#project-structure)
+- 🚀 [Getting started](#getting-started)
 
-</td></tr>
+</td>
+<td valign="top" width="50%">
+
+- 🔧 [Configuration](#configuration)
+- 💻 [Development](#development)
+- ☁️ [Deployment](#deployment)
+- 📡 [API reference](#api-reference)
+- ⚠️ [Known limitations](#known-limitations)
+
+</td>
+</tr>
 </table>
 
 ---
 
-## What it does
+## 🎯 What it does
 
 Policies pile up as an organization grows, and they quietly start contradicting each other — one
 document says *delete logs in 24 hours*, another says *retain logs for 7 years*. Nobody notices
@@ -64,13 +70,13 @@ It's not a document store. It reads and reasons about what it stores.
 
 | | |
 | :--- | :--- |
-| **Audit prep** | Weeks of manual cross-referencing → minutes of automated mapping. |
-| **Risk** | Contradictions surface the moment a policy is uploaded, not during an audit. |
-| **M&A integration** | Overlaps and gaps between two companies' policy sets, instantly. |
+| ⏱️ **Audit prep** | Weeks of manual cross-referencing → minutes of automated mapping. |
+| ⚠️ **Risk** | Contradictions surface the moment a policy is uploaded, not during an audit. |
+| 🤝 **M&A integration** | Overlaps and gaps between two companies' policy sets, instantly. |
 
 ---
 
-## Features
+## ✨ Features
 
 - **Clause segmentation** — parses uploaded text into a hierarchical clause tree.
 - **AI obligation extraction** — Gemini extracts subject / modality / action / object / category as structured JSON, with a rule-based fallback if no API key is set.
@@ -84,7 +90,7 @@ It's not a document store. It reads and reasons about what it stores.
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
@@ -187,7 +193,7 @@ graph TD
 
 ---
 
-## Tech stack
+## 🧰 Tech stack
 
 | Layer | Technology |
 | :--- | :--- |
@@ -201,7 +207,7 @@ graph TD
 
 ---
 
-## Project structure
+## 🗂️ Project structure
 
 ```
 PolicySentinel/
@@ -237,9 +243,9 @@ PolicySentinel/
 
 ---
 
-## Getting started
+## 🚀 Getting started
 
-### Docker Compose (recommended)
+### 🐳 Docker Compose (recommended)
 
 ```bash
 git clone <this-repository>
@@ -267,7 +273,7 @@ docker exec -w /app policysentinel-backend python -m scripts.setup.reset_db_clea
 
 Then follow [DEMO.md](DEMO.md) for a guided walkthrough.
 
-### Run natively
+### 🖥️ Run natively
 
 ```bash
 # Backend
@@ -291,7 +297,7 @@ Requires Python 3.11, Node 18+, PostgreSQL 16, and a Neo4j 5 instance.
 
 ---
 
-## Configuration
+## 🔧 Configuration
 
 Copy `.env.example` to `.env`. What's actually read:
 
@@ -309,7 +315,7 @@ Copy `.env.example` to `.env`. What's actually read:
 
 ---
 
-## Development
+## 💻 Development
 
 ```bash
 # Frontend
@@ -326,9 +332,9 @@ alembic upgrade head                         # apply pending migrations
 
 ---
 
-## Deployment
+## ☁️ Deployment
 
-### Live, right now
+### 🌐 Live, right now
 
 Entirely on free tiers:
 
@@ -345,7 +351,7 @@ Getting this working end-to-end surfaced two bugs a passing health check wouldn'
 - **Uploads didn't survive a redeploy.** Files went to local disk, and Render's free tier wipes it on every deploy — the `Policy` row survived (it's in Postgres), the file didn't. Fixed by storing file bytes in Postgres instead (`stored_files` table), no extra infrastructure required.
 
 <details>
-<summary><strong>Self-hosted (Docker Compose)</strong></summary>
+<summary><strong>🐳 Self-hosted (Docker Compose)</strong></summary>
 <br>
 
 ```bash
@@ -363,7 +369,7 @@ Audited end-to-end against a real `.env`, which surfaced four bugs:
 
 </details>
 
-### Before going live, you still need to
+### ✅ Before going live, you still need to
 
 1. **Rotate the secrets.** `APP_SECRET_KEY`, `JWT_SECRET_KEY`, `POSTGRES_PASSWORD`, `NEO4J_PASSWORD` default to `changeme`. The backend refuses to start in production with any of them still set — that's a safety net, not a substitute for rotating them.
 2. **Add authentication.** There is none yet — see [Known limitations](#known-limitations). Don't expose this with real policy data until that's addressed.
@@ -372,7 +378,7 @@ Audited end-to-end against a real `.env`, which surfaced four bugs:
 
 ---
 
-## API reference
+## 📡 API reference
 
 All routes are under `/api/v1`. None require authentication yet.
 
@@ -395,7 +401,7 @@ Full interactive docs at `/docs` while the backend is running.
 
 ---
 
-## Known limitations
+## ⚠️ Known limitations
 
 - **No authentication.** Every route above is open. A `User` model and `python-jose` exist, but there's no login endpoint — the Upload page asks for a plain Company ID / User ID instead of a session.
 - **No formal reasoning engine.** `z3-solver` is listed and `backend/reasoning/` documents an intended Z3 checker, but nothing imports `z3`. Conflict detection today is Gemini/rule-based, not a provable contradiction.
@@ -405,13 +411,13 @@ Full interactive docs at `/docs` while the backend is running.
 
 ---
 
-## License
+## 📄 License
 
 MIT — see [LICENSE](LICENSE).
 
 ---
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
 [Google AI Studio](https://ai.google.dev/) · [FastAPI](https://fastapi.tiangolo.com) · [Neo4j](https://neo4j.com) · [PyMuPDF](https://pymupdf.readthedocs.io/)
 
