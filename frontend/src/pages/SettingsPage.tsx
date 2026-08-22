@@ -7,6 +7,7 @@ import {
   Moon,
   RotateCcw,
   Save,
+  Sparkles,
   Sun,
   Trash2,
   XCircle,
@@ -122,13 +123,23 @@ export function SettingsPage() {
             <span className="mb-1.5 block text-sm font-medium text-foreground dark:text-neutral-100">
               Company ID
             </span>
-            <input
-              type="text"
-              value={companyId}
-              onChange={(event) => setCompanyId(event.target.value)}
-              placeholder="e.g. 6e671c26-dfd8-4ebe-832f-f5277432f865"
-              className={inputClasses(Boolean(fieldErrors.companyId))}
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={companyId}
+                onChange={(event) => setCompanyId(event.target.value)}
+                placeholder="e.g. 6e671c26-dfd8-4ebe-832f-f5277432f865"
+                className={inputClasses(Boolean(fieldErrors.companyId))}
+              />
+              <button
+                type="button"
+                onClick={() => setCompanyId(crypto.randomUUID())}
+                title="Generate a new company ID"
+                className="shrink-0 rounded-md border border-border px-3 text-neutral-500 hover:bg-neutral-50 hover:text-brand-600 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              >
+                <Sparkles className="h-4 w-4" />
+              </button>
+            </div>
             {fieldErrors.companyId && <FieldError message={fieldErrors.companyId} />}
           </label>
 
@@ -136,13 +147,23 @@ export function SettingsPage() {
             <span className="mb-1.5 block text-sm font-medium text-foreground dark:text-neutral-100">
               User ID
             </span>
-            <input
-              type="text"
-              value={userId}
-              onChange={(event) => setUserId(event.target.value)}
-              placeholder="e.g. f23c1df1-cb4f-4729-beb5-0b27315c9f2b"
-              className={inputClasses(Boolean(fieldErrors.userId))}
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={userId}
+                onChange={(event) => setUserId(event.target.value)}
+                placeholder="e.g. f23c1df1-cb4f-4729-beb5-0b27315c9f2b"
+                className={inputClasses(Boolean(fieldErrors.userId))}
+              />
+              <button
+                type="button"
+                onClick={() => setUserId(crypto.randomUUID())}
+                title="Generate a new user ID"
+                className="shrink-0 rounded-md border border-border px-3 text-neutral-500 hover:bg-neutral-50 hover:text-brand-600 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              >
+                <Sparkles className="h-4 w-4" />
+              </button>
+            </div>
             {fieldErrors.userId && <FieldError message={fieldErrors.userId} />}
           </label>
 

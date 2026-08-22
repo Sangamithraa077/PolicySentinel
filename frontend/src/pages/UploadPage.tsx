@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { AlertCircle, Loader2, Sparkles, UploadCloud } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -37,6 +37,11 @@ export function UploadPage() {
 
   const upload = usePolicyUpload();
   const { toasts, push: pushToast, dismiss: dismissToast } = useToasts();
+
+  useEffect(() => {
+    setCompanyId(identity.companyId);
+    setUploadedByUserId(identity.userId);
+  }, [identity]);
 
   // A dropdown of known companies by default; free-text entry only once
   // the user asks for it, or when there's nothing to pick from yet (the

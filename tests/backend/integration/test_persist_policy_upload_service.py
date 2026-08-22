@@ -298,3 +298,37 @@ def test_persist_automatically_detects_conflicts(
     assert conflicts[0].target_policy_id == result.policy_id
 
 
+def test_persist_auto_creates_missing_company_and_user(
+    db_session: Session, file_storage_service: FileStorageService
+) -> None:
+    from backend.models.company import Company
+    from backend.models.user import User
+
+    service = PersistPolicyUploadService(db_session, file_storage_service)
+    new_company_id = uuid.uuid4()
+    new_user_id = uuid.uuid4()
+
+    result = service.persist(
+        _validated_txt(),
+        company_id=new_company_id,
+        uploaded_by_user_id=new_user_id,
+        policy_title="Auto Created Organization Policy",
+        version_number=1,
+        description="Testing auto create features",
+        auto_create_missing=True,
+    )
+
+    # Check that company and user exist in DB
+    company = db_session.get(Company, new_company_id)
+    user = db_session.get(User, new_user_id)
+
+    assert company is not None
+    assert company.id == new_company_id
+    assert company.name == f"Company {str(new_company_id)[:8]}"
+
+    assert user is not None
+    assert user.id == new_user_id
+    assert user.company_id == new_company_id
+
+
+

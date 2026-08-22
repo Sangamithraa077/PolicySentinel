@@ -56,14 +56,14 @@ export function UploadedPoliciesList() {
         </div>
       )}
 
-      {data && data.items.length === 0 && (
+      {data && data.items && data.items.length === 0 && (
         <div className="flex flex-col items-center gap-2 px-5 py-10 text-center text-sm text-neutral-500">
           <Inbox className="h-8 w-8 text-neutral-300 dark:text-neutral-700" />
           No policies uploaded yet.
         </div>
       )}
 
-      {data && data.items.length > 0 && (
+      {data && data.items && data.items.length > 0 && (
         <ul className="divide-y divide-border dark:divide-neutral-800">
           {data.items.map((policy) => (
             <PolicyRow key={policy.id} policy={policy} />

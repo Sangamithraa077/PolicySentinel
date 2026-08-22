@@ -82,6 +82,7 @@ class PersistPolicyUploadService:
         policy_title: str,
         version_number: int,
         description: str | None,
+        auto_create_missing: bool = False,
     ) -> PersistedPolicyUpload:
         stored: StoredFile | None = None
         try:
@@ -89,13 +90,38 @@ class PersistPolicyUploadService:
                 select(Company).where(Company.id == company_id, Company.deleted_at.is_(None))
             )
             if company is None:
-                raise CompanyNotFoundError(f"Company '{company_id}' does not exist.")
+                if auto_create_missing:
+                    company = Company(
+                        id=company_id,
+                        name=f"Company {str(company_id)[:8]}",
+                        industry="Technology",
+                        jurisdiction="General",
+                        registration_number=f"REG-{str(company_id)[:8].upper()}",
+                    )
+                    self._db.add(company)
+                    self._db.flush()
+                else:
+                    raise CompanyNotFoundError(f"Company '{company_id}' does not exist.")
 
             uploader = self._db.scalar(
                 select(User).where(User.id == uploaded_by_user_id, User.deleted_at.is_(None))
             )
             if uploader is None:
-                raise UserNotFoundError(f"User '{uploaded_by_user_id}' does not exist.")
+                if auto_create_missing:
+                    from backend.models.enums import UserRole
+                    uploader = User(
+                        id=uploaded_by_user_id,
+                        company_id=company.id,
+                        email=f"user-{str(uploaded_by_user_id)[:8]}@{company.name.lower().replace(' ', '')}.com",
+                        password_hash="",  # Not checking passwords for uploads, or set a dummy hashed one
+                        full_name=f"User {str(uploaded_by_user_id)[:8]}",
+                        role=UserRole.ADMIN,
+                        is_active=True,
+                    )
+                    self._db.add(uploader)
+                    self._db.flush()
+                else:
+                    raise UserNotFoundError(f"User '{uploaded_by_user_id}' does not exist.")
 
             policy = Policy(
                 company=company,
