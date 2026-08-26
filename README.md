@@ -4,18 +4,26 @@
 
 ### Policy Conflict Detection & Compliance Intelligence Platform
 
-Automate policy cross-referencing. Detect hidden contradictions, modality shifts, and temporal mismatches across corporate documents with AI-drafted redline resolutions.
+<p align="center">
+  <b>Automate policy cross-referencing. Detect hidden contradictions, modality shifts, and temporal mismatches across corporate documents with AI-drafted redline resolutions.</b>
+</p>
 
-[![Python](https://img.shields.io/badge/Python-3.11+-8B5CF6?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.141-7C3AED?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-19-6D28D9?style=flat-square&logo=react&logoColor=white)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-8B5CF6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-7C3AED?style=flat-square&logo=postgresql&logoColor=white)](https://postgresql.org)
-[![Neo4j](https://img.shields.io/badge/Neo4j-5-6D28D9?style=flat-square&logo=neo4j&logoColor=white)](https://neo4j.com)
-[![Gemini AI](https://img.shields.io/badge/Gemini-AI-8B5CF6?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-7C3AED?style=flat-square&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-8B5CF6?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-0.141-7C3AED?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-19-6D28D9?style=for-the-badge&logo=react&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-8B5CF6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-7C3AED?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Neo4j-5-6D28D9?style=for-the-badge&logo=neo4j&logoColor=white" />
+  <img src="https://img.shields.io/badge/Gemini_AI-Google-8B5CF6?style=for-the-badge&logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-Compose-7C3AED?style=for-the-badge&logo=docker&logoColor=white" />
+</p>
 
-[Live Application](https://policysentinel-frontend.onrender.com) &nbsp;&bull;&nbsp; [API Documentation](https://policysentinel-backend.onrender.com/docs) &nbsp;&bull;&nbsp; [Interactive Demo Mode](https://policysentinel-frontend.onrender.com/demo)
+<p align="center">
+  <a href="https://policysentinel-frontend.onrender.com"><b>Live Application</b></a> &bull; 
+  <a href="https://policysentinel-backend.onrender.com/docs"><b>API Documentation</b></a> &bull; 
+  <a href="https://policysentinel-frontend.onrender.com/demo"><b>Interactive Demo Mode</b></a>
+</p>
 
 </div>
 
@@ -23,50 +31,55 @@ Automate policy cross-referencing. Detect hidden contradictions, modality shifts
 
 ## Executive Overview
 
-As organizations scale, policy documents accumulate across departments, creating undetected compliance liabilities:
+As organizations grow, corporate policies accumulate across different departments, creating hidden compliance risks and operational friction:
 
-- **Silent Policy Contradictions**: Information Security mandates deleting access logs after 90 days, while Data Retention requires retaining logs for 7 years.
-- **Manual Audit Bottlenecks**: Compliance teams spend weeks manually cross-referencing hundreds of pages before regulatory audits.
-- **Modality Erosion**: Critical mandates (*Must encrypt mobile devices*) get quietly diluted to recommendations (*Should encrypt mobile devices*) in newer policy revisions.
-- **M&A Policy Friction**: Merging corporate policies during acquisitions creates overlapping, conflicting operational directives.
+* **Silent Policy Contradictions**: Information Security mandates deleting access logs after 90 days, while Data Retention requires retaining logs for 7 years.
+* **Manual Audit Bottlenecks**: Compliance teams spend weeks manually cross-referencing hundreds of document pages before regulatory audits.
+* **Modality Erosion**: Critical mandates (*Must encrypt mobile devices*) get quietly diluted to discretionary suggestions (*Should encrypt mobile devices*) in newer policy versions.
+* **M&A Policy Friction**: Merging corporate policies during corporate acquisitions creates overlapping, conflicting operational rules.
 
 ---
 
 ## Solution Architecture
 
-PolicySentinel replaces manual policy reviews with an automated compliance intelligence pipeline:
+PolicySentinel replaces manual document reviews with an automated end-to-end compliance intelligence workflow:
 
-1. **Native Multi-Format Parsing**: Ingests `.pdf`, `.docx`, `.txt`, and `.md` files without pre-processing.
-2. **AI-Driven Obligation Structuring**: Extracts normalized compliance directives (Subject, Modality, Action, Object, Time Constraints) using Google Gemini AI.
-3. **Multi-Dimensional Conflict Analysis**: Compares obligations across all policies to detect semantic contradictions, modality shifts, and temporal mismatches.
-4. **Actionable AI Redlines**: Generates inline text revisions with an interactive Accept/Reject audit workflow.
-5. **Graph & Executive Intelligence**: Syncs policy relationships to Neo4j and exports audit-ready PDF compliance reports.
+1. **Native Multi-Format Parsing**: Automatically extracts text from `.pdf`, `.docx`, `.txt`, and `.md` files without manual document preparation.
+2. **AI-Driven Obligation Structuring**: Converts unstructured prose into structured directives (Subject, Modality, Action, Object, Time Constraints) using Google Gemini AI.
+3. **Multi-Dimensional Conflict Analysis**: Compares obligations across all policies to detect semantic contradictions, modality weakenings, and temporal mismatches.
+4. **Actionable AI Redlines**: Drafts inline policy text revisions with an interactive Accept/Reject audit workflow.
+5. **Graph & Executive Intelligence**: Connects policy relationships in Neo4j and exports audit-ready PDF compliance reports.
 
 ---
 
-## System Architecture & Execution Flow
+## System Execution Flow & Pipeline Outputs
+
+The diagram below shows how PolicySentinel processes uploaded documents step-by-step and highlights the **exact outputs** generated at each stage:
 
 ```mermaid
 flowchart TD
-    subgraph Step1["1. Document Ingestion"]
+    subgraph Step1["Step 1: Document Upload & Parsing"]
         A["Uploaded Policy Files\n(.pdf, .docx, .txt, .md)"] --> B["PyMuPDF & python-docx\nText Extractor"]
+        B --> Out1["Output 1: Clean Raw Document Text & Metadata"]
     end
 
-    subgraph Step2["2. Structure & Extraction"]
-        B --> C["Clause Segmentation Engine\n(Hierarchical Outline Tree)"]
-        C --> D["Google Gemini AI\nObligation Extractor"]
+    subgraph Step2["Step 2: Structure & AI Obligation Extraction"]
+        Out1 --> C["Clause Segmentation Engine"]
+        C --> Out2["Output 2: Structured Clause Tree Hierarchy\n(Section & Sub-clause Outline)"]
+        Out2 --> D["Google Gemini AI Obligation Extractor"]
+        D --> Out3["Output 3: Normalized Obligation JSON\n(Subject, Action, Modality, Time Constraint)"]
     end
 
-    subgraph Step3["3. Conflict Analysis Engine"]
-        D --> E["Semantic Vector Search\n(Cosine Similarity)"]
-        E --> F["Modality Shift & Temporal\nConflict Engine"]
+    subgraph Step3["Step 3: Multi-Dimensional Conflict Analysis"]
+        Out3 --> E["Semantic Vector Similarity & Rules Engine"]
+        E --> Out4["Output 4: Flagged Conflicts Matrix\n(Contradictions, Modality Shifts, Temporal Rotations)"]
     end
 
-    subgraph Step4["4. Resolution & Intelligence"]
-        F --> G["AI Redline Recommendation Service"]
-        F --> H["PostgreSQL 16\nRelational Storage"]
-        F --> I["Neo4j 5\nKnowledge Graph"]
-        F --> J["Executive PDF Audit Report"]
+    subgraph Step4["Step 4: AI Resolution, Knowledge Graph & PDF Reports"]
+        Out4 --> F["AI Redline Recommendation Engine"]
+        Out4 --> G["PostgreSQL 16 & Neo4j 5 Knowledge Graph"]
+        F --> Out5["Output 5: AI-Drafted Text Redlines & Accept/Reject Audit Trail"]
+        G --> Out6["Output 6: Visual Knowledge Graph & Downloadable Executive PDF Report"]
     end
 
     style Step1 fill:#F5F3FF,stroke:#7C3AED,color:#4C1D95
@@ -74,6 +87,48 @@ flowchart TD
     style Step3 fill:#F5F3FF,stroke:#7C3AED,color:#4C1D95
     style Step4 fill:#FFFFFF,stroke:#6D28D9,color:#4C1D95
 ```
+
+---
+
+## Pipeline Stage Outputs Summary
+
+<table width="100%">
+<tr>
+<th align="left">Pipeline Stage</th>
+<th align="left">Generated Output</th>
+<th align="left">What You See in the App</th>
+</tr>
+<tr>
+<td><b>1. Document Parsing</b></td>
+<td>Clean Raw Text & Metadata</td>
+<td>File upload status, document metadata, byte storage.</td>
+</tr>
+<tr>
+<td><b>2. Clause Segmentation</b></td>
+<td>Hierarchical Section Tree</td>
+<td>Structured Clause Tree outline view under <code>/clauses</code>.</td>
+</tr>
+<tr>
+<td><b>3. AI Extraction</b></td>
+<td>Normalized Obligation JSON</td>
+<td>Structured obligations with confidence scores under <code>/obligations</code>.</td>
+</tr>
+<tr>
+<td><b>4. Conflict Detection</b></td>
+<td>Flagged Conflicts Matrix</td>
+<td>High / Medium / Low conflict cards under <code>/conflicts</code>.</td>
+</tr>
+<tr>
+<td><b>5. AI Redlining</b></td>
+<td>AI-Drafted Text Revisions</td>
+<td>Interactive Accept / Reject redline cards under <code>/recommendations</code>.</td>
+</tr>
+<tr>
+<td><b>6. Graph & Reporting</b></td>
+<td>Neo4j Nodes & PDF Report</td>
+<td>Interactive node graph under <code>/knowledge-graph</code> & PDF report download.</td>
+</tr>
+</table>
 
 ---
 
@@ -193,6 +248,9 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 <div align="center">
 
-*Engineered for Enterprise Compliance & Risk Management Teams.*
+<p align="center">
+  <b>Engineered for Enterprise Compliance & Risk Management Teams.</b><br>
+  <i>So policy contradictions get caught before the auditor does.</i> ❤️
+</p>
 
 </div>
