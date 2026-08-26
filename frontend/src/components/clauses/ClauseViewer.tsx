@@ -26,7 +26,7 @@ export function ClauseViewer({ policyId }: { policyId: string }) {
   const searchQuery = useClauseSearch(policyId, debouncedKeyword);
 
   async function handleResegment() {
-    const versionId = clausesQuery.data?.items[0]?.policyVersionId;
+    const versionId = clausesQuery.data?.items[0]?.policy_version_id;
     if (!versionId) return;
     setIsResegmenting(true);
     try {
@@ -112,7 +112,7 @@ export function ClauseViewer({ policyId }: { policyId: string }) {
               ) : (
                 <span />
               )}
-              {clauses.length > 0 && clauses[0]?.policyVersionId && (
+              {clauses.length > 0 && clauses[0]?.policy_version_id && (
                 <button
                   type="button"
                   disabled={isResegmenting}
