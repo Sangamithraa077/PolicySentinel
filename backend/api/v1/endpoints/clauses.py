@@ -94,9 +94,9 @@ def get_clause(
     description="Triggers re-segmentation of a policy version using rule-based parsing with optional AI structure fallback.",
 )
 def resegment_clauses(
+    db: DbSession,
     policy_version_id: uuid.UUID = Query(..., description="ID of the policy version to re-segment"),
     use_ai_fallback: bool = Query(True, description="Enable AI fallback if rule-based parsing yields poor segmentation"),
-    db: DbSession = Depends(get_db),
     service: ClauseManagementService = Depends(get_clause_management_service),
 ) -> ClauseListResponse:
     from fastapi import HTTPException

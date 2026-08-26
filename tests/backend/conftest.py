@@ -115,7 +115,10 @@ def _apply_schema(admin_uri: str, dbname: str, port: int) -> None:
 
 @pytest.fixture(scope="session")
 def postgres_url() -> Generator[str, None, None]:
-    import pgserver
+    try:
+        import pgserver
+    except ImportError:
+        pytest.skip("pgserver not installed")
 
     data_root = Path(tempfile.mkdtemp())
     server = pgserver.get_server(str(data_root / "pgdata"))
