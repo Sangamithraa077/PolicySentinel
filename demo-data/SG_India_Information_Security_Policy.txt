@@ -1,0 +1,59 @@
+INFORMATION SECURITY AND DATA RETENTION POLICY
+SOCIETE GENERALE, INDIA
+
+CONTENTS
+
+I. INTRODUCTION & SCOPE
+II. MOBILE DEVICE & INFRASTRUCTURE SECURITY
+III. DATA LOCALIZATION AND STORAGE RESTRICTIONS
+IV. RECORD RETENTION & PURGING SCHEDULE
+V. INCIDENT RESPONSE & DISCLOSURE
+VI. GRIEVANCE REDRESSAL TIMELINES
+
+
+I. INTRODUCTION & SCOPE
+
+Societe Generale, India ("SG India") establishes this Information Security and Data Retention Policy ("Security Policy") to define standard operating controls for electronic infrastructure, data storage, and record retention across all business functions.
+
+This Security Policy applies to all IT systems, employees, contractors, third-party service providers, and business units operating under SG India.
+
+
+II. MOBILE DEVICE & INFRASTRUCTURE SECURITY
+
+1. Access Controls: Access to SG India network infrastructure requires multi-factor authentication for all users.
+
+2. Infrastructure Supervision: The security posture of SG India infrastructure is governed under local IT Security guidelines approved by the regional Chief Information Security Officer (CISO).
+
+3. Tape & Media Backups: Offline tape backups must be encrypted using AES-256 standards before offsite vault transfer.
+
+4. Mobile Device Usage (BYOD): Employees accessing corporate email or document repositories on personal mobile devices (laptops, mobile phones, tablets) are recommended to enable device-level encryption where technically feasible to reduce security risks.
+
+
+III. DATA LOCALIZATION AND STORAGE RESTRICTIONS
+
+1. Local Server Mandate: All Sensitive Personal Data and Information (SPDI) of Indian citizens and account holders processed by SG India must reside exclusively on physical servers located within the territorial boundaries of India.
+
+2. Cross-Border Cloud Transfer Prohibition: No SPDI or customer personal records may be transferred to, stored on, or processed by third-party cloud infrastructure or SG Group entities located outside India under any circumstances.
+
+
+IV. RECORD RETENTION & PURGING SCHEDULE
+
+1. Purpose Limitation: Customer data shall be processed strictly for operational and regulatory compliance needs.
+
+2. Mandatory Minimum Retention: All customer transaction logs, personal identifiers, physical documentation, and account history must be mandatorily retained for a minimum period of ten (10) years following the termination of the customer relationship or account closure.
+
+3. Log Purging: System access logs and security audit trails must be purged exactly after twelve (12) months.
+
+
+V. INCIDENT RESPONSE & DISCLOSURE
+
+1. Security Incident Escalation: Any potential breach of customer data or unauthorized system entry must be reported to the IT Security Officer within two (2) hours of discovery.
+
+2. External Disclosure: Incident disclosure to external regulatory authorities or law enforcement agencies shall only occur upon prior approval from SG India Legal and Compliance.
+
+
+VI. GRIEVANCE REDRESSAL TIMELINES
+
+1. Grievance Officer Escalation: Discrepancies, security complaints, or data privacy grievances submitted by information providers shall be directed to the designated Grievance Officer.
+
+2. Resolution Deadline: The Grievance Redressal Officer shall formally investigate, address, and resolve all grievances submitted by information providers within fifteen (15) business days from the date of receipt of the complaint.

@@ -45,17 +45,13 @@ def compute_cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     return max(0.0, min(1.0, score))
 
 
+from backend.services.ai.gemini_client import create_gemini_client
+
 class SemanticComparisonService:
     def __init__(self, db: Session, settings: Settings | None = None) -> None:
         self._db = db
         self._settings = settings or get_settings()
-        self._client = None
-
-        if self._settings.GEMINI_API_KEY and self._settings.GEMINI_API_KEY != "changeme":
-            try:
-                self._client = genai.Client(api_key=self._settings.GEMINI_API_KEY)
-            except Exception as exc:
-                logger.error("Failed to initialize Google GenAI client for embeddings: %s", exc)
+        self._client = create_gemini_client(self._settings)
 
     def get_embedding(self, text: str) -> list[float]:
         """Generates text embedding using Gemini or mock fallback."""

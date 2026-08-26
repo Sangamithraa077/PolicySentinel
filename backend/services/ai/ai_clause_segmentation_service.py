@@ -30,16 +30,12 @@ class ExtractedClauseList(BaseModel):
     clauses: list[ExtractedClauseItem] = Field(..., description="List of segmented document clauses")
 
 
+from backend.services.ai.gemini_client import create_gemini_client
+
 class AIClauseSegmentationService:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._client = None
-
-        if self._settings.GEMINI_API_KEY and self._settings.GEMINI_API_KEY != "changeme":
-            try:
-                self._client = genai.Client(api_key=self._settings.GEMINI_API_KEY)
-            except Exception as exc:
-                logger.error("Failed to initialize Google GenAI client for clause segmentation: %s", exc)
+        self._client = create_gemini_client(self._settings)
 
     def segment_with_ai(self, document_text: str) -> list[PolicyClause]:
         """Segments document text into structured PolicyClause entities using AI or heuristic fallback."""

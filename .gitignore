@@ -53,6 +53,7 @@ neo4j-data/
 Thumbs.db
 
 # --- Claude Code (local/machine-specific) ---
+.claude/
 .claude/settings.local.json
 
 # --- Docker ---

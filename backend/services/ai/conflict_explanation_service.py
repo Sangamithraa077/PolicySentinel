@@ -44,16 +44,12 @@ Target Obligation:
 """
 
 
+from backend.services.ai.gemini_client import create_gemini_client
+
 class ConflictExplanationService:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._client = None
-
-        if self._settings.GEMINI_API_KEY and self._settings.GEMINI_API_KEY != "changeme":
-            try:
-                self._client = genai.Client(api_key=self._settings.GEMINI_API_KEY)
-            except Exception as exc:
-                logger.error("Failed to initialize Google GenAI client in ConflictExplanationService: %s", exc)
+        self._client = create_gemini_client(self._settings)
 
     def generate_explanation(
         self,

@@ -25,18 +25,14 @@ class AIRegulatoryMappingResult(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+from backend.services.ai.gemini_client import create_gemini_client
+
 class AIRegulatoryMappingService:
     def __init__(self, db: Session, settings: Settings | None = None) -> None:
         self._db = db
         self._settings = settings or get_settings()
-        self._client = None
+        self._client = create_gemini_client(self._settings)
         self._kb_service = RegulatoryKnowledgeBaseService(db)
-
-        if self._settings.GEMINI_API_KEY and self._settings.GEMINI_API_KEY != "changeme":
-            try:
-                self._client = genai.Client(api_key=self._settings.GEMINI_API_KEY)
-            except Exception as exc:
-                logger.error("Failed to initialize Google GenAI client in AIRegulatoryMappingService: %s", exc)
 
     def map_obligation(self, obligation: Obligation) -> AIRegulatoryMappingResult:
         """Compares an obligation against the Regulatory Knowledge Base using Gemini AI or rule-based mapping."""
