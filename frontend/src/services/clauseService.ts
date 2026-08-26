@@ -33,3 +33,16 @@ export async function getClause(clauseId: string): Promise<any> {
   const response = await apiClient.get<any>(`/clauses/${clauseId}`);
   return response.data;
 }
+
+export async function resegmentClauses(
+  policyVersionId: string,
+  useAiFallback = true
+): Promise<ClauseListResponse> {
+  const response = await apiClient.post<ClauseListResponse>("/clauses/resegment", null, {
+    params: {
+      policy_version_id: policyVersionId,
+      use_ai_fallback: useAiFallback,
+    },
+  });
+  return response.data;
+}

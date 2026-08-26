@@ -59,6 +59,7 @@ async def upload_policy_document(
         policy_title=policy_title,
         version_number=version_number,
         description=description,
+        auto_create_missing=True,
     )
     return PolicyDocumentUploadResponse(
         original_filename=persisted.original_filename,

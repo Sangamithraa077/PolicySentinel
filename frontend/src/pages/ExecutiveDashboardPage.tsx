@@ -1,13 +1,34 @@
 import { useState } from "react";
 import {
   FileText, Shield, AlertTriangle, CheckCircle2, Sparkles, List,
-  TrendingDown, TrendingUp, Activity, Loader2, RefreshCw, FileDown
+  TrendingDown, Activity, Loader2, RefreshCw, FileDown
 } from "lucide-react";
 
 import { usePolicies } from "@/hooks/usePolicies";
 import { useExecutiveSummary, useComplianceAuditLogs } from "@/hooks/useComplianceDashboard";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { API_BASE_URL } from "@/services/apiClient";
+
+const RELATIVE_TIME_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 31536000],
+  ["month", 2592000],
+  ["day", 86400],
+  ["hour", 3600],
+  ["minute", 60],
+];
+const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+
+/** "2 hours ago" instead of a full locale timestamp — the exact time is
+ * still available on hover via the cell's title attribute. */
+function formatRelativeTime(iso: string): string {
+  const seconds = (new Date(iso).getTime() - Date.now()) / 1000;
+  for (const [unit, secondsInUnit] of RELATIVE_TIME_UNITS) {
+    if (Math.abs(seconds) >= secondsInUnit) {
+      return relativeTimeFormatter.format(Math.round(seconds / secondsInUnit), unit);
+    }
+  }
+  return relativeTimeFormatter.format(Math.round(seconds), "second");
+}
 
 export function ExecutiveDashboardPage() {
   const { identity, preferences } = useWorkspace();
@@ -100,10 +121,10 @@ export function ExecutiveDashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground dark:text-neutral-100 flex items-center gap-2">
             <Activity className="h-6 w-6 text-brand-500" />
-            Executive Compliance Dashboard
+            Dashboard
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-neutral-500">
-            Real-time compliance summary score calculation, risk level analysis, and audit trails tracking across policies.
+            How your policies are doing, at a glance.
           </p>
         </div>
         <div className="flex gap-2">
@@ -177,44 +198,20 @@ export function ExecutiveDashboardPage() {
         </div>
 
         {/* Risk Summary Description Box */}
-        <div className="md:col-span-2 rounded-lg border border-border bg-surface p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950 flex flex-col justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-brand-500 uppercase tracking-wider flex items-center gap-1.5">
-              <Shield className="h-4 w-4" />
-              Risk Analysis Summary
-            </span>
-            <h2 className="text-lg font-semibold text-foreground dark:text-neutral-100">
-              Compliance Integrity Assessment
-            </h2>
-            <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed bg-surface-muted/40 p-4 rounded-md border border-border/60">
-              {summary.risk_summary}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
-            <div className="flex items-center gap-2">
-              {summary.compliance_score >= 80 ? (
-                <TrendingUp className="h-5 w-5 text-green-500" />
-              ) : (
-                <TrendingDown className="h-5 w-5 text-red-500" />
-              )}
-              <div className="flex flex-col">
-                <span className="text-xs text-neutral-400 font-semibold uppercase">Risk Mitigation</span>
-                <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                  {summary.compliance_score >= 80 ? "Healthy status, monitor gaps" : "Requires immediate triage reviews"}
-                </span>
-              </div>
+        <div className="md:col-span-2 rounded-lg border border-border bg-surface p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950 flex flex-col justify-center gap-3">
+          <span className="text-sm font-semibold text-foreground dark:text-neutral-100 flex items-center gap-1.5">
+            <Shield className="h-4 w-4 text-brand-500" />
+            What this means
+          </span>
+          <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+            {summary.risk_summary}
+          </p>
+          {summary.compliance_score < 80 && (
+            <div className="flex items-center gap-2 text-xs font-medium text-red-600 dark:text-red-400">
+              <TrendingDown className="h-4 w-4" />
+              Needs attention — review the open conflicts below.
             </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-brand-500 animate-ping" />
-              <div className="flex flex-col">
-                <span className="text-xs text-neutral-400 font-semibold uppercase">Mitigation Path</span>
-                <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                  Align modalities & resolve conflicts
-                </span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
       </div>
@@ -280,10 +277,10 @@ export function ExecutiveDashboardPage() {
       <div className="rounded-lg border border-border bg-surface shadow-sm dark:border-neutral-800 dark:bg-neutral-950 p-6 flex flex-col gap-4">
         <div>
           <h3 className="text-base font-semibold text-foreground dark:text-neutral-100">
-            Immutable Compliance Audit History
+            Recent activity
           </h3>
           <p className="mt-1 text-xs text-neutral-500">
-            Append-only verification records documenting exact pipeline stages, extractions, uploads, and resolution status decisions.
+            A running record of what's happened to your policies — permanent, so nothing here can be edited or removed.
           </p>
         </div>
 
@@ -292,27 +289,23 @@ export function ExecutiveDashboardPage() {
           <table className="min-w-full divide-y divide-border dark:divide-neutral-800 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                <th className="pb-3 pr-4">Event ID</th>
-                <th className="pb-3 px-4">Event Type</th>
-                <th className="pb-3 px-4">Actor</th>
-                <th className="pb-3 px-4">Occurred Timestamp</th>
-                <th className="pb-3 pl-4">Description</th>
+                <th className="pb-3 pr-4">Event</th>
+                <th className="pb-3 px-4">Who</th>
+                <th className="pb-3 px-4">When</th>
+                <th className="pb-3 pl-4">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border dark:divide-neutral-800 text-neutral-700 dark:text-neutral-300">
               {auditLogsQuery.data?.items.map((log) => (
                 <tr key={log.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 transition-colors">
-                  <td className="py-3 pr-4 font-mono text-xs text-neutral-400 truncate max-w-[120px]" title={log.id}>
-                    {log.id}
-                  </td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 pr-4">
                     <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${getEventBadgeClass(log.event_type)}`}>
                       {log.event_type}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-xs font-medium">{log.user_identifier}</td>
-                  <td className="py-3 px-4 text-xs text-neutral-500">
-                    {new Date(log.occurred_at).toLocaleString()}
+                  <td className="py-3 px-4 text-xs text-neutral-500" title={new Date(log.occurred_at).toLocaleString()}>
+                    {formatRelativeTime(log.occurred_at)}
                   </td>
                   <td className="py-3 pl-4 font-medium text-neutral-900 dark:text-neutral-200">
                     {log.description}
@@ -321,8 +314,8 @@ export function ExecutiveDashboardPage() {
               ))}
               {(!auditLogsQuery.data || auditLogsQuery.data.items.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-neutral-400 text-xs">
-                    No compliance audit entries recorded yet.
+                  <td colSpan={4} className="py-8 text-center text-neutral-400 text-xs">
+                    Nothing yet — activity shows up here once a policy is uploaded.
                   </td>
                 </tr>
               )}

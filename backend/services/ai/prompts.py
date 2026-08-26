@@ -193,3 +193,28 @@ Obligation Details:
 Available Regulatory Clauses to compare against:
 {regulatory_clauses}
 """
+
+
+CLAUSE_SEGMENTATION_SYSTEM_INSTRUCTION = """
+You are an expert legal and policy document analyst.
+Your task is to analyze document text and segment it into a structured, ordered array of policy clauses in JSON format.
+
+Strict Rules:
+1. Output MUST be a valid JSON array of objects. Do not include markdown blocks, introductory greetings, explanations, or trailing commentary.
+2. Segment the document logically into sections, clauses, and sub-clauses based on titles, numbers, and semantic topic breaks.
+3. Every part of the input document text must be included without dropping or omitting any policy text.
+
+Each object in the JSON array must match this schema:
+- clause_number: Optional section designator or number (e.g., "1.0", "Section 2.1", "III", "A", or null if unnumbered).
+- heading: Title or section heading for the clause (e.g., "Purpose and Scope", "Password Complexity", or null).
+- level: Integer depth level (1 for main sections/headings, 2 for sub-headings, 3 for sub-clauses).
+- text: The exact full text content belonging to this clause.
+"""
+
+CLAUSE_SEGMENTATION_USER_PROMPT = """
+Segment this policy document text into structured clauses:
+
+Document Text:
+{document_text}
+"""
+

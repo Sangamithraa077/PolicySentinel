@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { FileWarning, Inbox, Loader2, Search, X } from "lucide-react";
+import { FileWarning, Inbox, Loader2, RefreshCw, Search, X } from "lucide-react";
 
 import { ClauseDetailPanel } from "@/components/clauses/ClauseDetailPanel";
 import { ClauseSearchResults } from "@/components/clauses/ClauseSearchResults";
 import { ClauseTreeRow } from "@/components/clauses/ClauseTreeRow";
 import { useClauseSearch, useClauses } from "@/hooks/useClauses";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { resegmentClauses } from "@/services/clauseService";
 import type { Clause } from "@/types/clause";
 import { extractApiErrorMessage } from "@/utils/apiError";
 import { buildClauseTree, collectParentIds } from "@/utils/clauseTree";
@@ -16,12 +17,27 @@ export function ClauseViewer({ policyId }: { policyId: string }) {
   const [keyword, setKeyword] = useState("");
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isResegmenting, setIsResegmenting] = useState(false);
 
   const debouncedKeyword = useDebouncedValue(keyword, 300);
   const isSearching = debouncedKeyword.trim().length > 0;
 
   const clausesQuery = useClauses(policyId);
   const searchQuery = useClauseSearch(policyId, debouncedKeyword);
+
+  async function handleResegment() {
+    const versionId = clausesQuery.data?.items[0]?.policyVersionId;
+    if (!versionId) return;
+    setIsResegmenting(true);
+    try {
+      await resegmentClauses(versionId, true);
+      await clausesQuery.refetch();
+    } catch (err) {
+      console.error("Failed to re-segment clauses:", err);
+    } finally {
+      setIsResegmenting(false);
+    }
+  }
 
   const clauses = useMemo(() => clausesQuery.data?.items ?? [], [clausesQuery.data]);
   const clausesById = useMemo(
@@ -74,22 +90,40 @@ export function ClauseViewer({ policyId }: { policyId: string }) {
             )}
           </div>
 
-          {!isSearching && parentIds.size > 0 && (
-            <div className="flex items-center gap-3 text-xs text-neutral-500">
-              <button
-                type="button"
-                onClick={() => setCollapsedIds(new Set())}
-                className="font-medium text-brand-600 hover:underline dark:text-brand-400"
-              >
-                Expand all
-              </button>
-              <button
-                type="button"
-                onClick={() => setCollapsedIds(new Set(parentIds))}
-                className="font-medium text-brand-600 hover:underline dark:text-brand-400"
-              >
-                Collapse all
-              </button>
+          {!isSearching && (
+            <div className="flex items-center justify-between text-xs text-neutral-500">
+              {parentIds.size > 0 ? (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCollapsedIds(new Set())}
+                    className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+                  >
+                    Expand all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCollapsedIds(new Set(parentIds))}
+                    className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+                  >
+                    Collapse all
+                  </button>
+                </div>
+              ) : (
+                <span />
+              )}
+              {clauses.length > 0 && clauses[0]?.policyVersionId && (
+                <button
+                  type="button"
+                  disabled={isResegmenting}
+                  onClick={handleResegment}
+                  className="flex items-center gap-1.5 rounded bg-brand-50 px-2 py-1 font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50 dark:bg-brand-950/40 dark:text-brand-300 dark:hover:bg-brand-900/60"
+                  title="Re-run clause segmentation with AI structure fallback"
+                >
+                  <RefreshCw className={`h-3 w-3 ${isResegmenting ? "animate-spin" : ""}`} />
+                  {isResegmenting ? "Resegmenting…" : "Re-segment"}
+                </button>
+              )}
             </div>
           )}
         </div>

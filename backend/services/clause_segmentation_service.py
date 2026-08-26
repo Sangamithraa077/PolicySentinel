@@ -57,12 +57,41 @@ from dataclasses import dataclass, field
 from backend.domain.entities.clause import ClauseMarkerType, PolicyClause
 
 _SECTION_HEADING_RE = re.compile(
-    r"^(section|article|chapter|appendix)\s+(\d+|[ivxlcdm]+|[a-z])\b[\s:.\-–—]*(.*)$",
+    r"^(section|article|chapter|appendix|rule|requirement|directive|policy|control|guideline)\s+([0-9a-z]+(?:\.[0-9a-z]+)*)\b[\s:.\-–—]*(.*)$",
     re.IGNORECASE,
 )
+_ROMAN_HEADING_RE = re.compile(
+    r"^(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV)\.[\s:.\-–—]+(.*)$",
+    re.IGNORECASE,
+)
+_LETTER_HEADING_RE = re.compile(r"^([A-Z])\.[\s:.\-–—]+([A-Z0-9\s:,\-–—]{2,})$")
 _DECIMAL_RE = re.compile(r"^(\d+(?:\.\d+)*)\.?\s+(.*)$")
 _NUMBERED_LIST_ITEM_RE = re.compile(r"^\(?([a-z0-9]{1,4})\)\.?\s+(.*)$", re.IGNORECASE)
 _BULLET_RE = re.compile(r"^[-*•‣▪◦]\s+(.*)$")
+
+_KNOWN_SECTION_TITLES = frozenset(
+    {
+        "PURPOSE",
+        "SCOPE",
+        "OVERVIEW",
+        "BACKGROUND",
+        "DEFINITIONS",
+        "POLICY STATEMENT",
+        "ROLES AND RESPONSIBILITIES",
+        "RESPONSIBILITIES",
+        "REQUIREMENTS",
+        "PROCEDURES",
+        "COMPLIANCE AND ENFORCEMENT",
+        "ENFORCEMENT",
+        "EXCEPTIONS",
+        "REVISION HISTORY",
+        "REFERENCES",
+        "APPLICABILITY",
+        "DATA PRIVACY",
+        "INFORMATION SECURITY",
+        "ACCESS CONTROL",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -97,7 +126,33 @@ _LIST_ANCHOR_KINDS = _HEADING_LEVEL_KINDS | {ClauseMarkerType.NUMBERED_LIST_ITEM
 
 
 class ClauseSegmentationService:
-    def segment(self, text: str) -> list[PolicyClause]:
+    def segment(self, text: str, use_ai_fallback: bool = True) -> list[PolicyClause]:
+        clauses = self._segment_rules(text)
+
+        # Evaluate quality of rule-based segmentation:
+        # AI fallback is only needed if rule-based segmentation completely failed to find structure
+        # (i.e. zero headings/numbers found for a long document, or the entire doc is one single BODY clause).
+        num_structured_clauses = sum(1 for c in clauses if c.heading or c.clause_number)
+        is_poor_segmentation = (
+            len(clauses) == 0
+            or (len(clauses) == 1 and clauses[0].marker_type is ClauseMarkerType.BODY and len(text) > 200)
+            or (num_structured_clauses == 0 and len(text) > 500)
+        )
+
+        if is_poor_segmentation and use_ai_fallback:
+            try:
+                from backend.services.ai.ai_clause_segmentation_service import AIClauseSegmentationService
+
+                ai_segmenter = AIClauseSegmentationService()
+                ai_clauses = ai_segmenter.segment_with_ai(text)
+                if len(ai_clauses) >= 1:
+                    return ai_clauses
+            except Exception as exc:
+                pass
+
+        return clauses
+
+    def _segment_rules(self, text: str) -> list[PolicyClause]:
         builders: list[_ClauseBuilder] = []
         stack: list[_StackEntry] = []
         paragraph: list[str] = []
@@ -125,7 +180,17 @@ class ClauseSegmentationService:
                 stack.pop()
             parent_id = stack[-1].clause_id if stack else None
 
-            is_heading_with_content = marker.kind in _HEADING_LEVEL_KINDS and marker.content
+            clean_heading = marker.content
+            body_part = None
+            if marker.kind in _HEADING_LEVEL_KINDS and marker.content:
+                for sep in (": ", " - ", " – ", " — "):
+                    if sep in marker.content:
+                        parts = marker.content.split(sep, 1)
+                        if len(parts[0].strip()) < 80 and len(parts[1].strip()) > 0:
+                            clean_heading = parts[0].strip()
+                            body_part = parts[1].strip()
+                            break
+
             clause_id = uuid.uuid4()
             builders.append(
                 _ClauseBuilder(
@@ -135,11 +200,13 @@ class ClauseSegmentationService:
                     level=level,
                     marker_type=marker.kind,
                     clause_number=marker.clause_number,
-                    heading=marker.content if is_heading_with_content else None,
+                    heading=clean_heading if (marker.kind in _HEADING_LEVEL_KINDS and clean_heading) else None,
                 )
             )
             stack.append(_StackEntry(level=level, clause_id=clause_id, kind=marker.kind))
-            if marker.content:
+            if body_part:
+                paragraph.append(body_part)
+            elif marker.content:
                 paragraph.append(marker.content)
 
         flush_paragraph()
@@ -192,12 +259,48 @@ def _match_marker(line: str) -> _Marker | None:
             content=content.strip(),
         )
 
+    match = _ROMAN_HEADING_RE.match(line)
+    if match:
+        numeral, content = match.groups()
+        return _Marker(
+            ClauseMarkerType.HEADING,
+            level_hint=1,
+            clause_number=f"Section {numeral.upper()}",
+            content=content.strip(),
+        )
+
+    match = _LETTER_HEADING_RE.match(line)
+    if match:
+        letter, content = match.groups()
+        return _Marker(
+            ClauseMarkerType.HEADING,
+            level_hint=1,
+            clause_number=f"Section {letter.upper()}",
+            content=content.strip(),
+        )
+
     match = _DECIMAL_RE.match(line)
     if match:
         number, content = match.groups()
-        depth = number.count(".") + 1
-        kind = ClauseMarkerType.HEADING if depth == 1 else ClauseMarkerType.SUBHEADING
-        return _Marker(kind, level_hint=depth, clause_number=number, content=content.strip())
+        # Guard against single-digit wrapped sentence false positives (e.g. "15 days notice...")
+        is_single_num = "." not in number
+        if is_single_num and content and content[0].islower():
+            pass
+        else:
+            depth = number.count(".") + 1
+            kind = ClauseMarkerType.HEADING if depth == 1 else ClauseMarkerType.SUBHEADING
+            return _Marker(kind, level_hint=depth, clause_number=number, content=content.strip())
+
+    # Check unnumbered uppercase or known section title heading
+    upper_line = line.strip().upper()
+    if len(line) <= 80 and not line.endswith((".", ";", ",")):
+        if upper_line in _KNOWN_SECTION_TITLES or (len(line) >= 4 and line.isupper() and line.isalpha()):
+            return _Marker(
+                ClauseMarkerType.HEADING,
+                level_hint=1,
+                clause_number=None,
+                content=line.strip(),
+            )
 
     match = _NUMBERED_LIST_ITEM_RE.match(line)
     if match:
@@ -232,3 +335,4 @@ def _nearest_ancestor_level(stack: list[_StackEntry], kinds: frozenset[ClauseMar
         if entry.kind in kinds:
             return entry.level
     return 0
+

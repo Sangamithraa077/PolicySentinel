@@ -1,11 +1,12 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { AlertCircle, Loader2, UploadCloud } from "lucide-react";
+import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { AlertCircle, Loader2, Sparkles, UploadCloud } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { ProgressBar } from "@/components/common/ProgressBar";
 import { ToastStack } from "@/components/common/Toast";
 import { PolicyDropzone } from "@/components/upload/PolicyDropzone";
 import { UploadedPoliciesList } from "@/components/upload/UploadedPoliciesList";
+import { useCompanyDirectory } from "@/hooks/useCompanyDirectory";
 import { usePolicyUpload } from "@/hooks/usePolicyUpload";
 import { useToasts } from "@/hooks/useToasts";
 import { useWorkspace } from "@/hooks/useWorkspace";
@@ -21,7 +22,10 @@ interface FieldErrors {
 }
 
 export function UploadPage() {
-  const { identity, setIdentity } = useWorkspace();
+  const { identity, setIdentity, companyLabel } = useWorkspace();
+  const directoryQuery = useCompanyDirectory();
+  const directory = directoryQuery.data ?? [];
+
   const [file, setFile] = useState<File | null>(null);
   const [companyId, setCompanyId] = useState(identity.companyId);
   const [uploadedByUserId, setUploadedByUserId] = useState(identity.userId);
@@ -29,9 +33,20 @@ export function UploadPage() {
   const [versionNumber, setVersionNumber] = useState("1");
   const [description, setDescription] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [addingNewCompany, setAddingNewCompany] = useState(false);
 
   const upload = usePolicyUpload();
   const { toasts, push: pushToast, dismiss: dismissToast } = useToasts();
+
+  useEffect(() => {
+    setCompanyId(identity.companyId);
+    setUploadedByUserId(identity.userId);
+  }, [identity]);
+
+  // A dropdown of known companies by default; free-text entry only once
+  // the user asks for it, or when there's nothing to pick from yet (the
+  // very first upload into a brand-new workspace).
+  const showNewCompanyInput = addingNewCompany || (directoryQuery.isSuccess && directory.length === 0);
 
   function validate(): FieldErrors {
     const errors: FieldErrors = {};
@@ -108,8 +123,7 @@ export function UploadPage() {
         Upload a policy document
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-neutral-500">
-        Upload a policy file to create a new policy record. This stores the document and its
-        metadata only — parsing and analysis happen in a later step.
+        Add a policy file to a company's workspace.
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -131,31 +145,101 @@ export function UploadPage() {
             {fieldErrors.file && <FieldError message={fieldErrors.file} />}
           </div>
 
-          <Field label="Company ID" error={fieldErrors.companyId}>
-            <input
-              type="text"
-              value={companyId}
-              onChange={(event) => setCompanyId(event.target.value)}
-              disabled={upload.isPending}
-              placeholder="e.g. 9616d35e-1830-4999-b5d8-66ea362851f3"
-              className={inputClasses(Boolean(fieldErrors.companyId))}
-            />
+          <Field label="Company" error={fieldErrors.companyId}>
+            {showNewCompanyInput ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={companyId}
+                  onChange={(event) => setCompanyId(event.target.value)}
+                  disabled={upload.isPending}
+                  placeholder="Paste or generate a new company ID"
+                  className={inputClasses(Boolean(fieldErrors.companyId))}
+                />
+                {directory.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setAddingNewCompany(false)}
+                    disabled={upload.isPending}
+                    className="shrink-0 rounded-md border border-border px-3 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  >
+                    Choose existing
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  value={companyId}
+                  onChange={(event) => setCompanyId(event.target.value)}
+                  disabled={upload.isPending}
+                  className={inputClasses(Boolean(fieldErrors.companyId))}
+                >
+                  <option value="" disabled>
+                    Select a company…
+                  </option>
+                  {directory.map((entry) => (
+                    <option key={entry.companyId} value={entry.companyId}>
+                      {companyLabel(entry.companyId)} · {entry.policyCount}{" "}
+                      {entry.policyCount === 1 ? "policy" : "policies"}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingNewCompany(true);
+                    setCompanyId("");
+                  }}
+                  disabled={upload.isPending}
+                  className="shrink-0 rounded-md border border-border px-3 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                >
+                  New company
+                </button>
+              </div>
+            )}
           </Field>
 
-          <Field label="Uploaded by (User ID)" error={fieldErrors.uploadedByUserId}>
-            <input
-              type="text"
-              value={uploadedByUserId}
-              onChange={(event) => setUploadedByUserId(event.target.value)}
+          {showNewCompanyInput && (
+            <button
+              type="button"
+              onClick={() => setCompanyId(crypto.randomUUID())}
               disabled={upload.isPending}
-              placeholder="e.g. 081a25e6-1b1b-45c8-a626-e173108f52b6"
-              className={inputClasses(Boolean(fieldErrors.uploadedByUserId))}
-            />
+              className="-mt-3 flex w-fit items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Generate a new company ID
+            </button>
+          )}
+
+          <Field label="Uploaded by" error={fieldErrors.uploadedByUserId}>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={uploadedByUserId}
+                onChange={(event) => setUploadedByUserId(event.target.value)}
+                disabled={upload.isPending}
+                placeholder="Your user ID"
+                className={inputClasses(Boolean(fieldErrors.uploadedByUserId))}
+              />
+              <button
+                type="button"
+                onClick={() => setUploadedByUserId(crypto.randomUUID())}
+                disabled={upload.isPending}
+                title="Generate a new user ID"
+                className="shrink-0 rounded-md border border-border px-3 text-neutral-500 hover:bg-neutral-50 hover:text-brand-600 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              >
+                <Sparkles className="h-4 w-4" />
+              </button>
+            </div>
           </Field>
 
           <p className="-mt-3 text-xs text-neutral-400">
-            Company and uploader are plain ID fields for now — they'll come from your session once
-            sign-in exists. Save them once in <Link to="/settings" className="underline hover:text-neutral-600 dark:hover:text-neutral-300">Settings</Link> to pre-fill this form going forward.
+            First time here? Generate an ID for each, then save them in{" "}
+            <Link to="/settings" className="underline hover:text-neutral-600 dark:hover:text-neutral-300">
+              Settings
+            </Link>{" "}
+            so every screen remembers who you are.
           </p>
 
           <Field label="Policy title" error={fieldErrors.policyTitle}>

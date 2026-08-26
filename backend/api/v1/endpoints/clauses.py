@@ -17,6 +17,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query
 
 from backend.api.dependencies.clauses import get_clause_management_service
+from backend.api.dependencies.database import DbSession, get_db
 from backend.domain.interfaces.clause_repository_interface import StoredClause
 from backend.schemas.clauses import ClauseListResponse, ClauseResponse
 from backend.services.clause_management_service import ClauseManagementService
@@ -84,3 +85,56 @@ def get_clause(
 ) -> ClauseResponse:
     clause = service.get_clause(clause_id)
     return _clause_response(clause)
+
+
+@router.post(
+    "/resegment",
+    response_model=ClauseListResponse,
+    summary="Re-segment policy document clauses",
+    description="Triggers re-segmentation of a policy version using rule-based parsing with optional AI structure fallback.",
+)
+def resegment_clauses(
+    policy_version_id: uuid.UUID = Query(..., description="ID of the policy version to re-segment"),
+    use_ai_fallback: bool = Query(True, description="Enable AI fallback if rule-based parsing yields poor segmentation"),
+    db: DbSession = Depends(get_db),
+    service: ClauseManagementService = Depends(get_clause_management_service),
+) -> ClauseListResponse:
+    from fastapi import HTTPException
+    from sqlalchemy import select
+    from backend.models.policy_version import PolicyVersion
+    from backend.repositories.clause_repository import ClauseRepository
+    from backend.services.clause_segmentation_service import ClauseSegmentationService
+    from backend.services.store_segmented_clauses_service import StoreSegmentedClausesService
+
+    version = db.scalar(
+        select(PolicyVersion).where(PolicyVersion.id == policy_version_id, PolicyVersion.deleted_at.is_(None))
+    )
+    if version is None:
+        raise HTTPException(status_code=404, detail="Policy version not found")
+
+    text = version.extracted_text
+    if not text:
+        raise HTTPException(status_code=400, detail="Policy version has no extracted text to segment.")
+
+    segmenter = ClauseSegmentationService()
+    segmented_clauses = segmenter.segment(text, use_ai_fallback=use_ai_fallback)
+
+    clause_repo = ClauseRepository(db)
+    clause_repo.delete_for_policy_version(version.id)
+    
+    store_service = StoreSegmentedClausesService(clause_repo)
+    store_service.store(
+        segmented_clauses,
+        policy_id=version.policy_id,
+        policy_version_id=version.id,
+    )
+    db.commit()
+
+    items, total = service.search(policy_version_id=version.id, limit=200, offset=0)
+    return ClauseListResponse(
+        items=[_clause_response(clause) for clause in items],
+        total=total,
+        limit=200,
+        offset=0,
+    )
+

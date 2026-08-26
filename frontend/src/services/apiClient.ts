@@ -22,7 +22,9 @@ import axios from "axios";
  * bundle keeps working via a same-origin relative path in production,
  * while local dev still gets the explicit absolute URL from `.env`.
  */
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://localhost:8000/api/v1" : "/api/v1");
 
 /**
  * Shared Axios instance for all backend REST calls. Feature-specific

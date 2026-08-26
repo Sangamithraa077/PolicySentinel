@@ -82,6 +82,7 @@ class PersistPolicyUploadService:
         policy_title: str,
         version_number: int,
         description: str | None,
+        auto_create_missing: bool = False,
     ) -> PersistedPolicyUpload:
         stored: StoredFile | None = None
         try:
@@ -89,13 +90,38 @@ class PersistPolicyUploadService:
                 select(Company).where(Company.id == company_id, Company.deleted_at.is_(None))
             )
             if company is None:
-                raise CompanyNotFoundError(f"Company '{company_id}' does not exist.")
+                if auto_create_missing:
+                    company = Company(
+                        id=company_id,
+                        name=f"Company {str(company_id)[:8]}",
+                        industry="Technology",
+                        jurisdiction="General",
+                        registration_number=f"REG-{str(company_id)[:8].upper()}",
+                    )
+                    self._db.add(company)
+                    self._db.flush()
+                else:
+                    raise CompanyNotFoundError(f"Company '{company_id}' does not exist.")
 
             uploader = self._db.scalar(
                 select(User).where(User.id == uploaded_by_user_id, User.deleted_at.is_(None))
             )
             if uploader is None:
-                raise UserNotFoundError(f"User '{uploaded_by_user_id}' does not exist.")
+                if auto_create_missing:
+                    from backend.models.enums import UserRole
+                    uploader = User(
+                        id=uploaded_by_user_id,
+                        company_id=company.id,
+                        email=f"user-{str(uploaded_by_user_id)[:8]}@{company.name.lower().replace(' ', '')}.com",
+                        password_hash="",  # Not checking passwords for uploads, or set a dummy hashed one
+                        full_name=f"User {str(uploaded_by_user_id)[:8]}",
+                        role=UserRole.ADMIN,
+                        is_active=True,
+                    )
+                    self._db.add(uploader)
+                    self._db.flush()
+                else:
+                    raise UserNotFoundError(f"User '{uploaded_by_user_id}' does not exist.")
 
             policy = Policy(
                 company=company,
@@ -114,31 +140,25 @@ class PersistPolicyUploadService:
                 content_type=validated.content_type,
             )
 
-            # Auto-extract text if the file is a PDF
+            # Auto-extract text for all supported document formats
             extracted_text: str | None = None
-            if validated.extension == ".pdf":
-                try:
-                    from pathlib import Path
-                    from backend.repositories.local_file_storage_repository import LocalFileStorageRepository
-                    from backend.parsing.pdf_text_extractor import extract_text
-                    
-                    storage = self._file_storage._storage
-                    if isinstance(storage, LocalFileStorageRepository):
-                        pdf_path = storage._root / stored.storage_path
-                        extracted_text = extract_text(pdf_path)
-                    else:
-                        # Fallback for cloud/S3 storage backends
-                        import tempfile
-                        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-                            tmp.write(validated.content)
-                            tmp_path = Path(tmp.name)
-                        try:
-                            extracted_text = extract_text(tmp_path)
-                        finally:
-                            tmp_path.unlink(missing_ok=True)
-                    logger.info("Successfully automatically extracted text from PDF for policy %s", policy.id)
-                except Exception as exc:
-                    logger.error("Failed to automatically extract text from PDF for policy %s: %s", policy.id, exc)
+            try:
+                from backend.services.document_parsing_service import build_default_document_parsing_service
+                from backend.services.text_normalization_service import TextNormalizationService
+
+                parsing_service = build_default_document_parsing_service()
+                parsed_doc = parsing_service.parse(validated.content, validated.extension)
+                normalizer = TextNormalizationService()
+                normalized_doc = normalizer.normalize(parsed_doc.text)
+                extracted_text = normalized_doc.text
+                logger.info(
+                    "Successfully extracted text (%d chars) from %s for policy %s",
+                    len(extracted_text),
+                    validated.extension,
+                    policy.id,
+                )
+            except Exception as exc:
+                logger.error("Failed to automatically extract text for policy %s: %s", policy.id, exc)
 
             version = PolicyVersion(
                 policy=policy,
@@ -175,11 +195,11 @@ class PersistPolicyUploadService:
                     company.id,
                     "Text Extraction",
                     uploader.email,
-                    f"Successfully extracted text from policy document PDF '{validated.original_filename}'"
+                    f"Successfully extracted text from policy document '{validated.original_filename}'"
                 )
 
             # Automatically run clause segmentation and store in database
-            if validated.extension == ".pdf" and extracted_text:
+            if extracted_text:
                 try:
                     from backend.repositories.clause_repository import ClauseRepository
                     from backend.services.clause_segmentation_service import ClauseSegmentationService

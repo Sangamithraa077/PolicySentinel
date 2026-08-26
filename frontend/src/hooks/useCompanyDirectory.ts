@@ -21,8 +21,10 @@ export function useCompanyDirectory() {
     queryFn: async (): Promise<CompanyDirectoryEntry[]> => {
       const response = await listPolicies({ limit: 200 });
       const counts = new Map<string, number>();
-      for (const policy of response.items) {
-        counts.set(policy.company_id, (counts.get(policy.company_id) ?? 0) + 1);
+      if (response && response.items) {
+        for (const policy of response.items) {
+          counts.set(policy.company_id, (counts.get(policy.company_id) ?? 0) + 1);
+        }
       }
       return Array.from(counts.entries())
         .map(([companyId, policyCount]) => ({ companyId, policyCount }))
