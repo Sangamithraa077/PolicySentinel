@@ -38,4 +38,3 @@ python-docx
 pytest
 pytest-asyncio
 httpx
-pgserver
