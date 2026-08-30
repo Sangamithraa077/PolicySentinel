@@ -153,10 +153,6 @@ We plan to expand the intelligence capabilities of PolicySentinel:
 * **Agentic Conflict Resolution**: Multi-agent consensus models to negotiate and automatically draft reconciled policies.
 * **Continuous Compliance Sync**: Real-time webhook listeners for OneDrive, Google Drive, and SharePoint to scan new policy versions on upload.
 
----
-
-## Conclusion
-
 <div align="center">
 
 PolicySentinel makes regulatory compliance audit-ready and automated. By resolving contradictions and addressing policy staleness, the platform protects organizations from compliance risks before they attract auditor attention.
