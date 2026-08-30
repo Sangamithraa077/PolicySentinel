@@ -1,11 +1,15 @@
+<div align="center">
+
 # Policy Conflict & Staleness Detector
 ### PolicySentinel — Policy Conflict Detection & Compliance Intelligence Platform
 
 Automate policy cross-referencing. Detect hidden contradictions, modality shifts, and temporal mismatches across corporate documents with AI-drafted redline resolutions.
 
+</div>
+
 ---
 
-## 📌 The Problem
+## The Problem
 Modern organizations face significant compliance risks and operational friction due to policy fragmentation:
 * **Silent Policy Contradictions**: Different departments publish conflicting mandates (e.g., InfoSec requiring log deletion after 90 days, while Legal requires retention for 7 years).
 * **Manual Audit Bottlenecks**: Compliance teams spend weeks manually cross-referencing hundreds of document pages before regulatory audits.
@@ -15,7 +19,7 @@ Modern organizations face significant compliance risks and operational friction 
 
 ---
 
-## 💡 The Proposed Solution
+## The Proposed Solution
 PolicySentinel transforms document reviews into an automated compliance workflow:
 
 ```
@@ -36,7 +40,7 @@ PolicySentinel transforms document reviews into an automated compliance workflow
 
 ---
 
-## 🏗️ System Architecture & Execution Flow
+## System Architecture & Execution Flow
 The diagram below details the ingestion and processing flow:
 
 ```mermaid
@@ -73,7 +77,7 @@ flowchart TD
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer | Technology | Why It Was Used |
 | :--- | :--- | :--- |
@@ -87,7 +91,7 @@ flowchart TD
 
 ---
 
-## 🚀 Installation & Execution Guide
+## Installation & Execution Guide
 
 ### Option A: Docker Compose (Recommended)
 This runs the entire stack in isolated containers.
@@ -141,7 +145,7 @@ npm run dev
 
 ---
 
-## 🔮 Future Implementation Roadmap
+## Future Implementation Roadmap
 
 We plan to expand the intelligence capabilities of PolicySentinel:
 
@@ -151,8 +155,12 @@ We plan to expand the intelligence capabilities of PolicySentinel:
 
 ---
 
-## 💙 Conclusion
+## Conclusion
+
+<div align="center">
 
 PolicySentinel makes regulatory compliance audit-ready and automated. By resolving contradictions and addressing policy staleness, the platform protects organizations from compliance risks before they attract auditor attention.
 
-*Engineered with care to keep your compliance seamless and risk-free.*
+*Engineered with care to keep your compliance seamless and risk-free.* ❤️
+
+</div>
