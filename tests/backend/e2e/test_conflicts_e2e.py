@@ -98,7 +98,7 @@ def test_conflicts_endpoints_flow(client: TestClient, db_session: Session, seede
     db_session.commit()
 
     # 2. Test GET /api/v1/conflicts
-    response = client.get("/api/v1/conflicts")
+    response = client.get("/api/v1/conflicts", params={"policy_id": str(policy_a.id)})
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
@@ -107,17 +107,18 @@ def test_conflicts_endpoints_flow(client: TestClient, db_session: Session, seede
     assert data["items"][0]["target_obligation"]["modality"] == "Should"
 
     # Test filtering by status
-    response_filter_status = client.get("/api/v1/conflicts", params={"status": "Open"})
+    response_filter_status = client.get("/api/v1/conflicts", params={"status": "Open", "policy_id": str(policy_a.id)})
     assert response_filter_status.json()["total"] == 1
     
-    response_filter_status_none = client.get("/api/v1/conflicts", params={"status": "Resolved"})
+    response_filter_status_none = client.get("/api/v1/conflicts", params={"status": "Resolved", "policy_id": str(policy_a.id)})
     assert response_filter_status_none.json()["total"] == 0
 
     # Test keyword search
-    response_search = client.get("/api/v1/conflicts", params={"search": "encryption"})
+    response_search = client.get("/api/v1/conflicts", params={"search": "encryption", "policy_id": str(policy_a.id)})
     assert response_search.json()["total"] == 1
 
-    response_search_none = client.get("/api/v1/conflicts", params={"search": "nonexistent"})
+    # Test search none
+    response_search_none = client.get("/api/v1/conflicts", params={"search": "nonexistent", "policy_id": str(policy_a.id)})
     assert response_search_none.json()["total"] == 0
 
     # 3. Test GET /api/v1/conflicts/{id}

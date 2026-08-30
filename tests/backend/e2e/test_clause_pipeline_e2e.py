@@ -97,6 +97,12 @@ def pipeline_result(client: TestClient, db_session: Session, seeded_company_and_
     assert upload_response.status_code == 201
     upload = upload_response.json()
 
+    # Clear automatically created clauses to avoid duplicates in the E2E test
+    ClauseRepository(db_session).delete_for_policy_version(
+        uuid.UUID(upload["policy_version_id"])
+    )
+    db_session.commit()
+
     raw_text = DocxDocumentParser().parse(docx_bytes)
     normalized = TextNormalizationService().normalize(raw_text)
     clauses = ClauseSegmentationService().segment(normalized.text)

@@ -164,7 +164,7 @@ def test_graph_population_and_neo4j_verification(db_session: Session, seeded_com
 
     # 5. Generate Verification Report
     import os
-    artifact_dir = "C:/Users/Santhoshkumar/.gemini/antigravity-ide/brain/2ea7d0ac-c388-4d80-b068-182b034c1145"
+    artifact_dir = (__import__("os").environ.get("ANTIGRAVITY_ARTIFACT_DIR") or str(__import__("pathlib").Path(__import__("os").environ.get("USERPROFILE") or __import__("os").environ.get("HOME", "")) / ".gemini" / "antigravity" / "brain" / __import__("os").environ.get("ANTIGRAVITY_CONVERSATION_ID", "")))
     os.makedirs(artifact_dir, exist_ok=True)
     report_path = f"{artifact_dir}/graph_population_verification_report.md"
     

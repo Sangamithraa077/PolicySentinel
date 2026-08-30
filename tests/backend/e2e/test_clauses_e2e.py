@@ -49,6 +49,8 @@ def _upload(client: TestClient, seeded_company_and_user, *, policy_title: str) -
 def _seed_clauses(
     db_session: Session, *, policy_id: str, policy_version_id: str, text: str
 ) -> list[PolicyClause]:
+    ClauseRepository(db_session).delete_for_policy_version(uuid.UUID(policy_version_id))
+    db_session.commit()
     clauses = ClauseSegmentationService().segment(text)
     StoreSegmentedClausesService(ClauseRepository(db_session)).store(
         clauses, policy_id=uuid.UUID(policy_id), policy_version_id=uuid.UUID(policy_version_id)

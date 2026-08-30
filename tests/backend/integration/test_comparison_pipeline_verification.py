@@ -167,7 +167,7 @@ Verification Status: SUCCESS
         )
 
     # Write the report to the artifacts directory
-    artifact_path = "C:/Users/Santhoshkumar/.gemini/antigravity-ide/brain/2ea7d0ac-c388-4d80-b068-182b034c1145/verification_report.md"
+    artifact_path = (__import__("os").environ.get("ANTIGRAVITY_ARTIFACT_DIR") or str(__import__("pathlib").Path(__import__("os").environ.get("USERPROFILE") or __import__("os").environ.get("HOME", "")) / ".gemini" / "antigravity" / "brain" / __import__("os").environ.get("ANTIGRAVITY_CONVERSATION_ID", ""))) + "/verification_report.md"
     os.makedirs(os.path.dirname(artifact_path), exist_ok=True)
     with open(artifact_path, "w", encoding="utf-8") as f:
         f.write(report_content)

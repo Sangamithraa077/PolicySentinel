@@ -1,60 +1,43 @@
-<div align="center">
+# Policy Conflict & Staleness Detector
+### PolicySentinel — Policy Conflict Detection & Compliance Intelligence Platform
 
-# PolicySentinel
-
-### Policy Conflict Detection & Compliance Intelligence Platform
-
-<p align="center">
-  <b>Automate policy cross-referencing. Detect hidden contradictions, modality shifts, and temporal mismatches across corporate documents with AI-drafted redline resolutions.</b>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11+-8B5CF6?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/FastAPI-0.141-7C3AED?style=for-the-badge&logo=fastapi&logoColor=white" />
-  <img src="https://img.shields.io/badge/React-19-6D28D9?style=for-the-badge&logo=react&logoColor=white" />
-  <img src="https://img.shields.io/badge/TypeScript-5.7-8B5CF6?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/PostgreSQL-16-7C3AED?style=for-the-badge&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Neo4j-5-6D28D9?style=for-the-badge&logo=neo4j&logoColor=white" />
-  <img src="https://img.shields.io/badge/Gemini_AI-Google-8B5CF6?style=for-the-badge&logo=google&logoColor=white" />
-  <img src="https://img.shields.io/badge/Docker-Compose-7C3AED?style=for-the-badge&logo=docker&logoColor=white" />
-</p>
-
-<p align="center">
-  <a href="https://policysentinel-frontend.onrender.com"><b>Live Application</b></a> &bull; 
-  <a href="https://policysentinel-backend.onrender.com/docs"><b>API Documentation</b></a> &bull; 
-  <a href="https://policysentinel-frontend.onrender.com/demo"><b>Interactive Demo Mode</b></a>
-</p>
-
-</div>
+Automate policy cross-referencing. Detect hidden contradictions, modality shifts, and temporal mismatches across corporate documents with AI-drafted redline resolutions.
 
 ---
 
-## Executive Overview
-
-As organizations grow, corporate policies accumulate across different departments, creating hidden compliance risks and operational friction:
-
-* **Silent Policy Contradictions**: Information Security mandates deleting access logs after 90 days, while Data Retention requires retaining logs for 7 years.
+## 📌 The Problem
+Modern organizations face significant compliance risks and operational friction due to policy fragmentation:
+* **Silent Policy Contradictions**: Different departments publish conflicting mandates (e.g., InfoSec requiring log deletion after 90 days, while Legal requires retention for 7 years).
 * **Manual Audit Bottlenecks**: Compliance teams spend weeks manually cross-referencing hundreds of document pages before regulatory audits.
-* **Modality Erosion**: Critical mandates (*Must encrypt mobile devices*) get quietly diluted to discretionary suggestions (*Should encrypt mobile devices*) in newer policy versions.
+* **Modality Shifts (Erosion)**: Critical mandates (*"Must encrypt mobile devices"*) are diluted to discretionary suggestions (*"Should encrypt mobile devices"*) in newer policy versions.
 * **M&A Policy Friction**: Merging corporate policies during corporate acquisitions creates overlapping, conflicting operational rules.
+* **Policy Staleness**: Outdated policies remain active without review, creating security gaps and compliance violations.
 
 ---
 
-## Solution Architecture
+## 💡 The Proposed Solution
+PolicySentinel transforms document reviews into an automated compliance workflow:
 
-PolicySentinel replaces manual document reviews with an automated end-to-end compliance intelligence workflow:
-
-1. **Native Multi-Format Parsing**: Automatically extracts text from `.pdf`, `.docx`, `.txt`, and `.md` files without manual document preparation.
-2. **AI-Driven Obligation Structuring**: Converts unstructured prose into structured directives (Subject, Modality, Action, Object, Time Constraints) using Google Gemini AI.
-3. **Multi-Dimensional Conflict Analysis**: Compares obligations across all policies to detect semantic contradictions, modality weakenings, and temporal mismatches.
-4. **Actionable AI Redlines**: Drafts inline policy text revisions with an interactive Accept/Reject audit workflow.
-5. **Graph & Executive Intelligence**: Connects policy relationships in Neo4j and exports audit-ready PDF compliance reports.
+```
+[Uploaded Document] 
+       │
+       ▼
+[Clause Segmentation] ──► Extracts paragraphs, hierarchy, and section trees
+       │
+       ▼
+[AI Obligation Parser] ──► Converts prose to structured JSON (Subject, Modality, Action)
+       │
+       ▼
+[Conflict & Staleness Engine] ──► Analyzes contradictions, temporal mismatches, and age
+       │
+       ▼
+[Actionable Redlines] ──► Generates AI-drafted inline resolutions and Cypher graphs
+```
 
 ---
 
-## System Execution Flow & Pipeline Outputs
-
-The diagram below shows how PolicySentinel processes uploaded documents step-by-step and highlights the **exact outputs** generated at each stage:
+## 🏗️ System Architecture & Execution Flow
+The diagram below details the ingestion and processing flow:
 
 ```mermaid
 flowchart TD
@@ -90,76 +73,24 @@ flowchart TD
 
 ---
 
-## Pipeline Stage Outputs Summary
+## 🛠️ Technology Stack
 
-<table width="100%">
-<tr>
-<th align="left">Pipeline Stage</th>
-<th align="left">Generated Output</th>
-<th align="left">What You See in the App</th>
-</tr>
-<tr>
-<td><b>1. Document Parsing</b></td>
-<td>Clean Raw Text & Metadata</td>
-<td>File upload status, document metadata, byte storage.</td>
-</tr>
-<tr>
-<td><b>2. Clause Segmentation</b></td>
-<td>Hierarchical Section Tree</td>
-<td>Structured Clause Tree outline view under <code>/clauses</code>.</td>
-</tr>
-<tr>
-<td><b>3. AI Extraction</b></td>
-<td>Normalized Obligation JSON</td>
-<td>Structured obligations with confidence scores under <code>/obligations</code>.</td>
-</tr>
-<tr>
-<td><b>4. Conflict Detection</b></td>
-<td>Flagged Conflicts Matrix</td>
-<td>High / Medium / Low conflict cards under <code>/conflicts</code>.</td>
-</tr>
-<tr>
-<td><b>5. AI Redlining</b></td>
-<td>AI-Drafted Text Revisions</td>
-<td>Interactive Accept / Reject redline cards under <code>/recommendations</code>.</td>
-</tr>
-<tr>
-<td><b>6. Graph & Reporting</b></td>
-<td>Neo4j Nodes & PDF Report</td>
-<td>Interactive node graph under <code>/knowledge-graph</code> & PDF report download.</td>
-</tr>
-</table>
-
----
-
-## Core Platform Capabilities
-
-| Capability | Technical Mechanism | Business Value |
+| Layer | Technology | Why It Was Used |
 | :--- | :--- | :--- |
-| **Multi-Format Ingestion** | PyMuPDF, python-docx & raw text parsers | Zero document prep required; ingest existing enterprise PDFs and Word files natively. |
-| **Clause Segmentation** | Heuristic outline matching + Gemini AI fallback | Preserves document hierarchy (Chapters, Sections, Sub-clauses) for targeted auditing. |
-| **Obligation Extraction** | Gemini AI JSON Schema enforcement | Converts unstructured prose into structured rules: *Who*, *Must/Should*, *What*, *When*. |
-| **Conflict Detection** | Semantic similarity & rule-based engine | Identifies duplicates, direct contradictions, modality shifts, and temporal mismatches. |
-| **AI Redlining** | Gemini AI text synthesis | Provides instant, copy-pasteable revised text to resolve policy conflicts cleanly. |
-| **Knowledge Graph** | Neo4j 5 Cypher queries | Visualizes policy dependencies and performs instant impact analysis across policies. |
-| **Audit Reporting** | ReportLab PDF generator | Generates executive risk scores (0–100) and downloadable compliance audit trails. |
+| **Frontend** | React 19, TypeScript 5.7, Tailwind CSS, Vite | Provides a highly responsive, type-safe interactive UI. Vite ensures fast Hot Module Replacement (HMR) during development. |
+| **Backend** | FastAPI 0.141, Python 3.11+ | Asynchronous high-performance REST API. Automatically generates Swagger docs and integrates easily with ML/AI libraries. |
+| **Relational DB** | PostgreSQL 16 | Handles structured configuration, company metadata, user credentials, and audit logs with ACID compliance. |
+| **Graph DB** | Neo4j 5 | Stores policy hierarchies and obligation dependencies. Cypher queries enable fast impact analysis and relationship traversals. |
+| **AI Processing** | Google Gemini AI | Performs obligation parsing and policy contradiction redlining via schema-enforced JSON generation. |
+| **Doc Parsing** | PyMuPDF, python-docx | Natively parses PDF and Word files without complex cloud dependencies. |
+| **Formal Logic** | Z3 Solver | Validates logical contradictions and checks modality strengths mathematically. |
 
 ---
 
-## Supported Formats & Extraction Specifications
-
-| Extension | Parser Engine | Extraction Capabilities |
-| :--- | :--- | :--- |
-| `.pdf` | PyMuPDF (`fitz`) | Multi-page text extraction, heading detection, layout preservation. |
-| `.docx` | `python-docx` | Structured paragraph parsing, table cell text extraction, heading levels. |
-| `.txt` | UTF-8 Plain Text | Fast line-by-line parsing, section header discovery. |
-| `.md` | Markdown Parser | AST header hierarchy extraction (`#`, `##`, `###`), list item parsing. |
-
----
-
-## Quick Start Guide
+## 🚀 Installation & Execution Guide
 
 ### Option A: Docker Compose (Recommended)
+This runs the entire stack in isolated containers.
 
 ```bash
 # 1. Clone the repository
@@ -188,6 +119,7 @@ docker exec -w /app policysentinel-backend python -m scripts.setup.seed_demo_dat
 ---
 
 ### Option B: Native Local Execution
+Use this if you are running the backend and frontend services directly on your host machine.
 
 ```bash
 # 1. Start Postgres & Neo4j containers
@@ -199,7 +131,7 @@ python -m venv venv
 # Windows: .\venv\Scripts\activate | macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 python -m alembic upgrade head
-python -m uvicorn backend.main:app --host 0.0.0.0 --port 8001 --reload
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 # 3. Start Frontend App (Terminal 2)
 cd frontend
@@ -209,48 +141,18 @@ npm run dev
 
 ---
 
-## API Reference Overview
+## 🔮 Future Implementation Roadmap
 
-All REST API endpoints are scoped under `/api/v1`:
+We plan to expand the intelligence capabilities of PolicySentinel:
 
-| Module | Route | Method | Description |
-| :--- | :--- | :--- | :--- |
-| **Uploads** | `/uploads/policies` | `POST` | Ingests `.pdf`/`.docx`/`.txt`/`.md` & triggers automated AI pipeline. |
-| **Policies** | `/policies` | `GET` / `DELETE` | List, inspect metadata, or remove company policies. |
-| **Clauses** | `/clauses` | `GET` / `POST` | List clauses, search keywords, or trigger AI re-segmentation. |
-| **Obligations** | `/obligations` | `GET` | Filter obligations by modality (`Must`, `Should`) and category. |
-| **Conflicts** | `/conflicts` | `GET` / `PATCH` | List detected policy contradictions and update review status. |
-| **Recommendations** | `/recommendations` | `GET` / `PATCH` | Review AI-drafted redline resolutions and accept/reject edits. |
-| **Dashboard** | `/compliance-dashboard/summary` | `GET` | Fetch compliance risk score and download executive PDF report. |
-| **Knowledge Graph** | `/graph/policy/{id}` | `GET` | Query Neo4j node relationships and perform audit impact analysis. |
+* **Interactive RAG Chatbot**: Integrate a Retrieval-Augmented Generation (RAG) chatbot using the Neo4j Knowledge Graph. Users will be able to query policies in natural language (e.g., *"What is our policy on remote password rotation?"* or *"Are there any contradictions regarding logs?"*) and receive contextual answers linked directly to clauses.
+* **Agentic Conflict Resolution**: Multi-agent consensus models to negotiate and automatically draft reconciled policies.
+* **Continuous Compliance Sync**: Real-time webhook listeners for OneDrive, Google Drive, and SharePoint to scan new policy versions on upload.
 
 ---
 
-## Environment Configuration
+## 💙 Conclusion
 
-| Variable | Purpose | Default Value |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://policysentinel:changeme@127.0.0.1:5433/policysentinel` |
-| `NEO4J_URI` | Neo4j Bolt connection URI | `bolt://localhost:7687` |
-| `NEO4J_USER` | Neo4j database user | `neo4j` |
-| `NEO4J_PASSWORD` | Neo4j database password | `changeme` |
-| `GEMINI_API_KEY` | Google AI Studio API key | *(Optional — activates live Gemini extraction)* |
-| `GEMINI_MODEL` | Gemini AI model version | `gemini-1.5-flash` |
-| `CORS_ALLOWED_ORIGINS` | Permitted frontend origins | `http://localhost:3000,http://localhost:3001` |
+PolicySentinel makes regulatory compliance audit-ready and automated. By resolving contradictions and addressing policy staleness, the platform protects organizations from compliance risks before they attract auditor attention.
 
----
-
-## License
-
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
-
----
-
-<div align="center">
-
-<p align="center">
-  <b>Engineered for Enterprise Compliance & Risk Management Teams.</b><br>
-  <i>So policy contradictions get caught before the auditor does.</i> ❤️
-</p>
-
-</div>
+*Engineered with care to keep your compliance seamless and risk-free.*

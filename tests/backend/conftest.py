@@ -42,6 +42,10 @@ os.chdir(REPO_ROOT)
 # only test that needs to actually build an oversized payload.
 TEST_MAX_UPLOAD_SIZE_MB = 1
 
+os.environ["GEMINI_API_KEY"] = "changeme"
+os.environ["ANTHROPIC_API_KEY"] = "changeme"
+
+
 
 def _apply_schema(admin_uri: str, dbname: str, port: int) -> None:
     """Creates `dbname` and brings it up to the latest Alembic revision.
@@ -68,7 +72,8 @@ def _apply_schema(admin_uri: str, dbname: str, port: int) -> None:
         cur.execute(f'CREATE DATABASE "{dbname}"')
     admin_conn.close()
 
-    test_url = f"postgresql://postgres:@127.0.0.1:{port}/{dbname}"
+    base_uri, _ = admin_uri.rsplit("/", 1)
+    test_url = f"{base_uri}/{dbname}"
 
     # alembic/env.py deliberately ignores whatever sqlalchemy.url we pass
     # via Config and always rebuilds it from config.settings.get_settings()
@@ -115,21 +120,51 @@ def _apply_schema(admin_uri: str, dbname: str, port: int) -> None:
 
 @pytest.fixture(scope="session")
 def postgres_url() -> Generator[str, None, None]:
+    use_pgserver = False
     try:
         import pgserver
+        use_pgserver = True
     except ImportError:
-        pytest.skip("pgserver not installed")
+        pass
 
-    data_root = Path(tempfile.mkdtemp())
-    server = pgserver.get_server(str(data_root / "pgdata"))
-    try:
-        port = int(server.get_uri().rsplit(":", 1)[-1].split("/")[0])
+    if use_pgserver:
+        data_root = Path(tempfile.mkdtemp())
+        server = pgserver.get_server(str(data_root / "pgdata"))
+        try:
+            port = int(server.get_uri().rsplit(":", 1)[-1].split("/")[0])
+            dbname = f"policysentinel_test_{uuid.uuid4().hex[:8]}"
+            _apply_schema(server.get_uri(), dbname, port)
+            yield f"postgresql://postgres:@127.0.0.1:{port}/{dbname}"
+        finally:
+            server.cleanup()
+            shutil.rmtree(data_root, ignore_errors=True)
+    else:
+        # Fall back to using the running Docker database or local PostgreSQL instance
+        import psycopg2
+        
+        # We can construct the admin URI from the environment's DATABASE_URL or defaults.
+        db_user = os.environ.get("POSTGRES_USER", "policysentinel")
+        db_pass = os.environ.get("POSTGRES_PASSWORD", "changeme")
+        db_host = os.environ.get("POSTGRES_HOST", "127.0.0.1")
+        db_port = os.environ.get("POSTGRES_PORT", "5433")
+        
+        # Admin URI (typically connecting to the default postgres or template1 DB)
+        admin_uri = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/postgres"
+        
         dbname = f"policysentinel_test_{uuid.uuid4().hex[:8]}"
-        _apply_schema(server.get_uri(), dbname, port)
-        yield f"postgresql://postgres:@127.0.0.1:{port}/{dbname}"
-    finally:
-        server.cleanup()
-        shutil.rmtree(data_root, ignore_errors=True)
+        try:
+            _apply_schema(admin_uri, dbname, int(db_port))
+            # Test postgres URL needs the right credentials:
+            yield f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{dbname}"
+            
+            # Clean up the test database after the test session
+            admin_conn = psycopg2.connect(admin_uri)
+            admin_conn.autocommit = True
+            with admin_conn.cursor() as cur:
+                cur.execute(f'DROP DATABASE IF EXISTS "{dbname}"')
+            admin_conn.close()
+        except Exception as exc:
+            pytest.skip(f"pgserver not installed and local Postgres connection failed: {exc}")
 
 
 @pytest.fixture(scope="session")
@@ -141,10 +176,21 @@ def db_engine(postgres_url: str) -> Generator[Engine, None, None]:
 
 @pytest.fixture
 def db_session(db_engine: Engine) -> Generator[Session, None, None]:
+    # Clear all database tables to guarantee test isolation
+    from sqlalchemy import MetaData
+    meta = MetaData()
+    meta.reflect(bind=db_engine)
+    
     session_factory = sessionmaker(
         bind=db_engine, autoflush=False, autocommit=False, expire_on_commit=False
     )
     session = session_factory()
+    
+    # Delete child tables before parent tables to avoid foreign key violations
+    for table in reversed(meta.sorted_tables):
+        session.execute(table.delete())
+    session.commit()
+    
     try:
         yield session
     finally:

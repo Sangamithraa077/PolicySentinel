@@ -153,7 +153,7 @@ def test_demo_environment_workflow_validation(db_session: Session, file_storage_
     assert len(conflicts) > 0, "Conflicts should be present in the demonstration database."
 
     # Write report
-    report_dir = Path("C:/Users/Santhoshkumar/.gemini/antigravity-ide/brain/2ea7d0ac-c388-4d80-b068-182b034c1145")
+    report_dir = Path((__import__("os").environ.get("ANTIGRAVITY_ARTIFACT_DIR") or str(__import__("pathlib").Path(__import__("os").environ.get("USERPROFILE") or __import__("os").environ.get("HOME", "")) / ".gemini" / "antigravity" / "brain" / __import__("os").environ.get("ANTIGRAVITY_CONVERSATION_ID", ""))))
     report_dir.mkdir(parents=True, exist_ok=True)
     report_path = report_dir / "demo_verification_report.md"
     
