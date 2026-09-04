@@ -186,9 +186,18 @@ def db_session(db_engine: Engine) -> Generator[Session, None, None]:
     )
     session = session_factory()
     
-    # Delete child tables before parent tables to avoid foreign key violations
-    for table in reversed(meta.sorted_tables):
-        session.execute(table.delete())
+    # Delete tables in strict child-to-parent order to eliminate foreign key constraint errors
+    table_order = [
+        "recommendations", "conflicts", "relationships", "advanced_findings",
+        "regulatory_mappings", "obligations", "clauses", "policy_versions",
+        "policies", "stored_files", "compliance_audit_logs", "users", "companies"
+    ]
+    if "policies" in meta.tables:
+        session.execute(meta.tables["policies"].update().values(current_version_id=None))
+        session.commit()
+    for table_name in table_order:
+        if table_name in meta.tables:
+            session.execute(meta.tables[table_name].delete())
     session.commit()
     
     try:
