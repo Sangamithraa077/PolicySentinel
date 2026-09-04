@@ -224,57 +224,61 @@ class PersistPolicyUploadService:
                         f"Successfully segmented policy text into {len(segmented_clauses)} clauses"
                     )
 
-                    # Automatically extract and store compliance obligations
-                    try:
-                        from backend.services.ai.obligation_extraction_pipeline_service import ObligationExtractionPipelineService
-                        obligation_pipeline = ObligationExtractionPipelineService(self._db)
-                        obligation_pipeline.run_pipeline(version.id)
-                        logger.info("Successfully automatically extracted obligations for policy version %s", version.id)
-                        record_compliance_audit_log(
-                            self._db,
-                            company.id,
-                            "Obligation Extraction",
-                            uploader.email,
-                            f"Successfully extracted compliance obligations for policy version {version.version_number}"
-                        )
+                    self._db.commit()
 
-                        # Run comparison pipeline to detect and persist conflicts
-                        try:
-                            from backend.services.comparison.comparison_pipeline_service import ComparisonPipelineService
-                            comparison_pipeline = ComparisonPipelineService(self._db)
-                            comparison_pipeline.run_pipeline(version.id)
-                            logger.info("Successfully automatically compared and detected conflicts for policy version %s", version.id)
-                            record_compliance_audit_log(
-                                self._db,
-                                company.id,
-                                "Conflict Detection",
-                                uploader.email,
-                                f"Successfully completed semantic comparison and conflict detection for policy version {version.version_number}"
-                            )
-                        except Exception as exc:
-                            logger.error("Failed to automatically run comparison pipeline for policy version %s: %s", version.id, exc)
-                    except Exception as exc:
-                        logger.error("Failed to automatically extract obligations for policy version %s: %s", version.id, exc)
+                    # Launch background thread for AI obligation extraction, conflict analysis & Neo4j sync
+                    # so that upload HTTP request returns INSTANTLY (< 1 sec) to the user UI!
+                    import threading
+
+                    def _run_async_ai_pipeline(version_id: uuid.UUID, company_id: uuid.UUID, uploader_email: str, policy_id: uuid.UUID, v_num: int):
+                        from backend.database.session import SessionLocal
+                        from backend.services.compliance_dashboard_service import record_compliance_audit_log
+                        with SessionLocal() as bg_db:
+                            try:
+                                from backend.services.ai.obligation_extraction_pipeline_service import ObligationExtractionPipelineService
+                                obligation_pipeline = ObligationExtractionPipelineService(bg_db)
+                                obligation_pipeline.run_pipeline(version_id)
+                                logger.info("Successfully extracted obligations for policy version %s", version_id)
+                                record_compliance_audit_log(
+                                    bg_db,
+                                    company_id,
+                                    "Obligation Extraction",
+                                    uploader_email,
+                                    f"Successfully extracted compliance obligations for policy version {v_num}"
+                                )
+                                bg_db.commit()
+
+                                from backend.services.comparison.comparison_pipeline_service import ComparisonPipelineService
+                                comparison_pipeline = ComparisonPipelineService(bg_db)
+                                comparison_pipeline.run_pipeline(version_id)
+                                logger.info("Successfully compared and detected conflicts for policy version %s", version_id)
+                                record_compliance_audit_log(
+                                    bg_db,
+                                    company_id,
+                                    "Conflict Detection",
+                                    uploader_email,
+                                    f"Successfully completed semantic comparison and conflict detection for policy version {v_num}"
+                                )
+                                bg_db.commit()
+
+                                from backend.graph.graph_population_service import GraphPopulationService
+                                sync_service = GraphPopulationService(bg_db)
+                                logger.info("Synchronizing policy %s to Neo4j graph...", policy_id)
+                                sync_service.sync_policy(policy_id)
+                                logger.info("Successfully synchronized policy %s to Neo4j graph", policy_id)
+                            except Exception as exc:
+                                logger.error("Background AI pipeline error for version %s: %s", version_id, exc)
+
+                    threading.Thread(
+                        target=_run_async_ai_pipeline,
+                        args=(version.id, company.id, uploader.email, policy.id, version.version_number),
+                        daemon=True
+                    ).start()
                 except Exception as exc:
                     logger.error("Failed to automatically segment and store clauses for policy %s: %s", policy.id, exc)
-
-            self._db.commit()
-
-            # Automatically synchronize metadata to Neo4j Knowledge Graph
-            try:
-                from backend.graph.graph_population_service import GraphPopulationService
-                # Initialize new session from connection pool to be completely isolated and safe
-                from backend.database.session import SessionLocal
-                with SessionLocal() as sync_db:
-                    sync_service = GraphPopulationService(sync_db)
-                    logger.info("Automatically synchronizing policy %s to Neo4j graph...", policy.id)
-                    sync_success = sync_service.sync_policy(policy.id)
-                    if sync_success:
-                        logger.info("Successfully automatically synchronized policy %s to Neo4j graph.", policy.id)
-                    else:
-                        logger.warning("Automatic graph sync failed for policy %s, but workflow continued.", policy.id)
-            except Exception as sync_err:
-                logger.error("Error during automatic graph synchronization for policy %s: %s", policy.id, sync_err)
+                    self._db.commit()
+            else:
+                self._db.commit()
         except Exception:
             self._db.rollback()
             if stored is not None:

@@ -16,10 +16,14 @@ def retry_on_transient_error(max_retries=3, initial_delay=1.0, backoff_factor=2.
                     return func(*args, **kwargs)
                 except Exception as exc:
                     exc_name = type(exc).__name__
-                    # Classify if error is transient (e.g. rate limits, timeouts, temporary server issues)
+                    # If daily rate limit / quota is exhausted, raise immediately to fallback instantly
+                    if any(q_word in str(exc).lower() or q_word in exc_name.lower() for q_word in ["resource_exhausted", "quota", "429"]):
+                        raise exc
+
+                    # Classify if error is transient (e.g. timeouts, temporary server issues)
                     is_transient = any(
                         t_word in exc_name.lower() or t_word in str(exc).lower()
-                        for t_word in ["quota", "rate", "429", "timeout", "conn", "503", "500", "overloaded", "servererror"]
+                        for t_word in ["timeout", "conn", "503", "500", "overloaded", "servererror"]
                     )
                     if not is_transient:
                         # Non-transient error, raise immediately
