@@ -190,6 +190,6 @@ npm run dev
 
 PolicySentinel delivers enterprise compliance assurance through automated policy cross-referencing, formal logic validation, and AI-powered redlines.
 
-*Built with precision for robust, audit-ready compliance.*
+*Built with precision for robust, audit-ready compliance.❤️*
 
 </div>
