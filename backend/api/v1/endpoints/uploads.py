@@ -41,9 +41,11 @@ router = APIRouter()
 )
 async def upload_policy_document(
     file: Annotated[UploadFile, File(description="The policy document to upload")],
-    company_id: Annotated[uuid.UUID, Form(description="The company this policy belongs to")],
-    uploaded_by_user_id: Annotated[uuid.UUID, Form(description="The user performing the upload")],
     policy_title: Annotated[str, Form(min_length=1, description="Title for the new policy")],
+    company_id: Annotated[str | None, Form(description="Existing company UUID or identifier")] = None,
+    company_name: Annotated[str | None, Form(description="Meaningful name for new or referenced company")] = None,
+    uploaded_by_user_id: Annotated[str | None, Form(description="Existing user UUID or identifier")] = None,
+    uploaded_by_name: Annotated[str | None, Form(description="Meaningful name for the uploader")] = None,
     version_number: Annotated[int, Form(ge=1, description="Version number for this upload")] = 1,
     description: Annotated[
         str | None, Form(description="Optional description of this version")
@@ -55,7 +57,9 @@ async def upload_policy_document(
     persisted = persist_service.persist(
         validated,
         company_id=company_id,
+        company_name=company_name,
         uploaded_by_user_id=uploaded_by_user_id,
+        uploaded_by_name=uploaded_by_name,
         policy_title=policy_title,
         version_number=version_number,
         description=description,
@@ -73,8 +77,10 @@ async def upload_policy_document(
         policy_id=persisted.policy_id,
         policy_version_id=persisted.policy_version_id,
         company_id=persisted.company_id,
+        company_name=persisted.company_name,
         policy_title=persisted.policy_title,
         version_number=persisted.version_number,
         description=persisted.description,
         uploaded_by_user_id=persisted.uploaded_by_user_id,
+        uploaded_by_name=persisted.uploaded_by_name,
     )

@@ -51,6 +51,7 @@ def _policy_summary(policy: Policy) -> PolicySummary:
     return PolicySummary(
         id=policy.id,
         company_id=policy.company_id,
+        company_name=policy.company.name if policy.company else None,
         title=policy.title,
         policy_code=policy.policy_code,
         category=policy.category,
@@ -65,6 +66,7 @@ def _policy_detail(policy: Policy, versions: list[PolicyVersion]) -> PolicyDetai
     return PolicyDetail(
         id=policy.id,
         company_id=policy.company_id,
+        company_name=policy.company.name if policy.company else None,
         title=policy.title,
         policy_code=policy.policy_code,
         category=policy.category,

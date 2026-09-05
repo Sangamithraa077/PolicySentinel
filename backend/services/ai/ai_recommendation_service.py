@@ -91,7 +91,7 @@ Suggested Action: {suggested_action}
 """
 
 
-from backend.services.ai.gemini_client import create_gemini_client
+from backend.services.ai.gemini_client import create_gemini_client, is_circuit_broken, trip_circuit_breaker
 
 class AIRecommendationService:
     def __init__(self, settings: Settings | None = None) -> None:
@@ -106,7 +106,7 @@ class AIRecommendationService:
         target_ob: Obligation | None
     ) -> RecommendationAIResult:
         """Generates a structured compliance recommendation based on obligations and conflict metadata."""
-        if self._client is None:
+        if self._client is None or is_circuit_broken():
             return self._get_mock_recommendation(conflict_type, severity, source_ob, target_ob)
 
         user_prompt = RECOMMENDATION_USER_PROMPT.format(
@@ -138,6 +138,8 @@ class AIRecommendationService:
             data = json.loads(response.text)
             return RecommendationAIResult(**data)
         except Exception as exc:
+            if "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "quota" in str(exc).lower():
+                trip_circuit_breaker("429 Quota Exceeded")
             logger.error("Failed to generate AI recommendation: %s. Falling back to mock.", exc)
             return self._get_mock_recommendation(conflict_type, severity, source_ob, target_ob)
 
@@ -149,7 +151,7 @@ class AIRecommendationService:
         suggested_action: str
     ) -> RedlineAIResult:
         """Generates policy clause redlines highlighting only modified elements while preserving legal phrasing."""
-        if self._client is None:
+        if self._client is None or is_circuit_broken():
             return self._get_mock_redline(source_clause_text, target_clause_text, recommendation_summary, suggested_action)
 
         user_prompt = REDLINE_USER_PROMPT.format(
@@ -173,6 +175,8 @@ class AIRecommendationService:
             data = json.loads(response.text)
             return RedlineAIResult(**data)
         except Exception as exc:
+            if "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "quota" in str(exc).lower():
+                trip_circuit_breaker("429 Quota Exceeded")
             logger.error("Failed to generate AI redline: %s. Falling back to mock.", exc)
             return self._get_mock_redline(source_clause_text, target_clause_text, recommendation_summary, suggested_action)
 

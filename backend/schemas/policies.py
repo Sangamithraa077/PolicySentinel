@@ -34,6 +34,7 @@ class PolicySummary(BaseModel):
 
     id: uuid.UUID
     company_id: uuid.UUID
+    company_name: str | None = None
     title: str
     policy_code: str | None
     category: str | None

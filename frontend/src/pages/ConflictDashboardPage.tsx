@@ -300,19 +300,19 @@ export function ConflictDashboardPage() {
                           <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Action</span>
                           <span className="text-foreground dark:text-neutral-200">{selectedConflict.source_obligation.action} {selectedConflict.source_obligation.object}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-1">
-                          <div>
-                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Modality</span>
-                            <span className="text-foreground dark:text-neutral-200 font-medium">{selectedConflict.source_obligation.modality}</span>
+                        <div className="flex flex-wrap items-start gap-x-4 gap-y-1.5 py-0.5">
+                          <div className="min-w-[65px]">
+                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider text-[10px]">Modality</span>
+                            <span className="text-foreground dark:text-neutral-200 font-semibold">{selectedConflict.source_obligation.modality}</span>
                           </div>
-                          <div>
-                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Category</span>
+                          <div className="min-w-[90px] flex-1">
+                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider text-[10px]">Category</span>
                             <span className="text-foreground dark:text-neutral-200">{selectedConflict.source_obligation.compliance_category}</span>
                           </div>
                         </div>
                         {selectedConflict.source_obligation.time_constraint && (
                           <div>
-                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Time Limit</span>
+                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider text-[10px]">Time Limit</span>
                             <span className="text-foreground dark:text-neutral-200">{selectedConflict.source_obligation.time_constraint}</span>
                           </div>
                         )}
@@ -339,19 +339,19 @@ export function ConflictDashboardPage() {
                           <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Action</span>
                           <span className="text-foreground dark:text-neutral-200">{selectedConflict.target_obligation.action} {selectedConflict.target_obligation.object}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-1">
-                          <div>
-                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Modality</span>
-                            <span className="text-foreground dark:text-neutral-200 font-medium">{selectedConflict.target_obligation.modality}</span>
+                        <div className="flex flex-wrap items-start gap-x-4 gap-y-1.5 py-0.5">
+                          <div className="min-w-[65px]">
+                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider text-[10px]">Modality</span>
+                            <span className="text-foreground dark:text-neutral-200 font-semibold">{selectedConflict.target_obligation.modality}</span>
                           </div>
-                          <div>
-                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Category</span>
+                          <div className="min-w-[90px] flex-1">
+                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider text-[10px]">Category</span>
                             <span className="text-foreground dark:text-neutral-200">{selectedConflict.target_obligation.compliance_category}</span>
                           </div>
                         </div>
                         {selectedConflict.target_obligation.time_constraint && (
                           <div>
-                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider">Time Limit</span>
+                            <span className="text-neutral-400 block font-semibold uppercase tracking-wider text-[10px]">Time Limit</span>
                             <span className="text-foreground dark:text-neutral-200">{selectedConflict.target_obligation.time_constraint}</span>
                           </div>
                         )}

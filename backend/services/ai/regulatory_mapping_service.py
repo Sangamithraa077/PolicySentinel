@@ -25,7 +25,7 @@ class AIRegulatoryMappingResult(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-from backend.services.ai.gemini_client import create_gemini_client
+from backend.services.ai.gemini_client import create_gemini_client, is_circuit_broken, trip_circuit_breaker
 
 class AIRegulatoryMappingService:
     def __init__(self, db: Session, settings: Settings | None = None) -> None:
@@ -39,15 +39,13 @@ class AIRegulatoryMappingService:
         # Ensure default regulatory knowledge base is seeded
         self._kb_service.seed_default_frameworks()
         
-        if self._client is None:
-            logger.info("No Gemini API key configured. Falling back to rule-based regulatory mapping.")
+        if self._client is None or is_circuit_broken():
             return self._get_rule_based_mapping(obligation)
 
         # Retrieve all active regulatory clauses to form the prompt catalog
         clauses = self._kb_service.list_clauses()
         clauses_context = []
         for cl in clauses:
-            # We want to represent the framework name along with each clause
             framework_name = self._db.scalars(
                 self._db.query(RegulatoryFramework.name).filter(RegulatoryFramework.id == cl.regulatory_framework_id)
             ).first() or "Unknown"
@@ -83,6 +81,8 @@ class AIRegulatoryMappingService:
             data = json.loads(response.text)
             return AIRegulatoryMappingResult(**data)
         except Exception as exc:
+            if "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "quota" in str(exc).lower():
+                trip_circuit_breaker("429 Quota Exceeded")
             logger.error("Failed to run AI regulatory mapping: %s. Falling back to rule-based engine.", exc)
             return self._get_rule_based_mapping(obligation)
 
@@ -90,58 +90,94 @@ class AIRegulatoryMappingService:
         """Rules-based keyword engine to evaluate and map obligations to frameworks without AI overhead."""
         text_to_search = f"{obligation.subject} {obligation.action} {obligation.object} {obligation.compliance_category}".lower()
 
-        # ISO 27001 - Logging Control
-        if "log" in text_to_search or "logging" in text_to_search or "audit event" in text_to_search:
+        # 1. ISO 27001 - Access Control
+        if any(k in text_to_search for k in ["access", "credential", "password", "mfa", "authenticate", "privilege", "role-based", "login"]):
+            return AIRegulatoryMappingResult(
+                framework_name="ISO 27001",
+                clause_number="A.9.1.1",
+                confidence_score=0.94,
+                explanation="Mapped to ISO 27001 A.9.1.1 Access Control Policy covering authentication, credentials, and user access authorization."
+            )
+
+        # 2. ISO 27001 - Event Logging & Audit
+        if any(k in text_to_search for k in ["log", "logging", "audit trail", "event log", "monitoring", "siem"]):
             return AIRegulatoryMappingResult(
                 framework_name="ISO 27001",
                 clause_number="A.12.4.1",
                 confidence_score=0.95,
-                explanation="Automatically mapped based on system logging, audit trails, and event logging security controls."
+                explanation="Mapped to ISO 27001 A.12.4.1 Event Logging requirement for producing, keeping, and reviewing security audit records."
             )
 
-        # GDPR - Erasure / Privacy
-        if "erase" in text_to_search or "erasure" in text_to_search or "forget" in text_to_search or "delete user" in text_to_search or "privacy" in text_to_search:
+        # 3. GDPR - Security of Processing & Incident Response
+        if any(k in text_to_search for k in ["incident", "breach", "vulnerability", "security event", "threat", "ciso", "notify"]):
+            return AIRegulatoryMappingResult(
+                framework_name="GDPR",
+                clause_number="Article 32",
+                confidence_score=0.92,
+                explanation="Mapped to GDPR Article 32 (Security of Processing) requiring timely detection, reporting, and remediation of security incidents."
+            )
+
+        # 4. GDPR - Data Integrity, Encryption & Confidentiality
+        if any(k in text_to_search for k in ["encrypt", "confidential", "integrity", "data security", "data protection", "dpo", "personal data"]):
+            return AIRegulatoryMappingResult(
+                framework_name="GDPR",
+                clause_number="Article 5(1)(f)",
+                confidence_score=0.93,
+                explanation="Mapped to GDPR Article 5(1)(f) Integrity and Confidentiality principle for protecting data against unauthorized or unlawful processing."
+            )
+
+        # 5. GDPR - Right to Erasure / Data Subject Rights
+        if any(k in text_to_search for k in ["erase", "erasure", "forget", "delete user", "data subject", "privacy"]):
             return AIRegulatoryMappingResult(
                 framework_name="GDPR",
                 clause_number="Article 17(1)",
                 confidence_score=0.92,
-                explanation="Automatically mapped based on data subject rights, right to erasure ('right to be forgotten'), and personal data retention."
+                explanation="Mapped to GDPR Article 17(1) Right to Erasure ('right to be forgotten') and personal data retention limits."
             )
 
-        # RBI - Customer verification / CDD
-        if "kyc" in text_to_search or "cdd" in text_to_search or "customer due diligence" in text_to_search or "identify customer" in text_to_search:
-            return AIRegulatoryMappingResult(
-                framework_name="RBI",
-                clause_number="Clause 23",
-                confidence_score=0.88,
-                explanation="Automatically mapped based on Reserve Bank of India Customer Due Diligence (CDD) guidelines."
-            )
-
-        # RBI - Record retention
-        if "retain" in text_to_search or "retention" in text_to_search or "transaction record" in text_to_search:
+        # 6. RBI - Record Retention
+        if any(k in text_to_search for k in ["retain", "retention", "transaction record", "store record", "preserve record", "5 years"]):
             return AIRegulatoryMappingResult(
                 framework_name="RBI",
                 clause_number="Clause 38",
-                confidence_score=0.90,
-                explanation="Automatically mapped based on financial transaction record keeping and five-year minimum retention rules."
+                confidence_score=0.91,
+                explanation="Mapped to RBI Clause 38 Maintenance of Records requiring preservation of records and transactions for compliance verification."
             )
 
-        # SEBI - Disclosure of material events
-        if "disclose" in text_to_search or "disclosure" in text_to_search or "material event" in text_to_search or "lodr" in text_to_search:
+        # 7. RBI - Customer Due Diligence / KYC
+        if any(k in text_to_search for k in ["kyc", "cdd", "customer due diligence", "customer identification", "verify identity"]):
+            return AIRegulatoryMappingResult(
+                framework_name="RBI",
+                clause_number="Clause 23",
+                confidence_score=0.90,
+                explanation="Mapped to RBI Clause 23 Customer Due Diligence (CDD) guidelines for customer onboarding and ongoing verification."
+            )
+
+        # 8. SEBI - Disclosure of Material Events & Anti-Corruption/Ethics
+        if any(k in text_to_search for k in ["disclose", "disclosure", "material event", "lodr", "brib", "corruption", "gift", "hospitality", "whistleblow", "conflict of interest"]):
             return AIRegulatoryMappingResult(
                 framework_name="SEBI",
                 clause_number="Regulation 30",
-                confidence_score=0.94,
-                explanation="Automatically mapped based on Securities and Exchange Board of India Listing Obligations and Disclosure Requirements."
+                confidence_score=0.93,
+                explanation="Mapped to SEBI Regulation 30 governing disclosure of material events, corporate governance, and anti-corruption transparency."
             )
 
-        # SEBI - Asset inventory
-        if "asset inventory" in text_to_search or "inventory of all" in text_to_search or "hardware inventory" in text_to_search:
+        # 9. SEBI - Asset Inventory & Infrastructure Security
+        if any(k in text_to_search for k in ["asset inventory", "hardware", "software", "network connection", "infrastructure", "system admin"]):
             return AIRegulatoryMappingResult(
                 framework_name="SEBI",
                 clause_number="Circular Clause 4",
                 confidence_score=0.91,
-                explanation="Automatically mapped based on SEBI cybersecurity requirements for maintaining asset inventories."
+                explanation="Mapped to SEBI Cybersecurity Circular Clause 4 requiring comprehensive asset inventory and risk management."
+            )
+
+        # 10. ISO 27001 - General Compliance & Statutory Identification
+        if any(k in text_to_search for k in ["compliance", "legal", "statutory", "contractual", "standard", "policy"]):
+            return AIRegulatoryMappingResult(
+                framework_name="ISO 27001",
+                clause_number="A.18.1.1",
+                confidence_score=0.88,
+                explanation="Mapped to ISO 27001 A.18.1.1 Identification of applicable legislation and compliance approach."
             )
 
         return AIRegulatoryMappingResult(

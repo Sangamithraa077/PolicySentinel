@@ -29,7 +29,7 @@ class TemporalConflictResult(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-from backend.services.ai.gemini_client import create_gemini_client
+from backend.services.ai.gemini_client import create_gemini_client, is_circuit_broken, trip_circuit_breaker
 
 class TemporalConflictDetectionService:
     def __init__(self, settings: Settings | None = None) -> None:
@@ -42,7 +42,7 @@ class TemporalConflictDetectionService:
         ob_b: Obligation | None
     ) -> TemporalConflictResult:
         """Compares two obligations for deadlines, frequencies, validity periods, and review cycles using Gemini."""
-        if self._client is None:
+        if self._client is None or is_circuit_broken():
             return self._get_mock_temporal_conflict(ob_a, ob_b)
 
         user_prompt = TEMPORAL_CONFLICT_USER_PROMPT.format(
@@ -66,6 +66,8 @@ class TemporalConflictDetectionService:
             data = json.loads(response.text)
             return TemporalConflictResult(**data)
         except Exception as exc:
+            if "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "quota" in str(exc).lower():
+                trip_circuit_breaker("429 Quota Exceeded")
             logger.error("Failed to detect temporal conflict with AI: %s. Falling back to mock.", exc)
             return self._get_mock_temporal_conflict(ob_a, ob_b)
 

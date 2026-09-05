@@ -63,13 +63,17 @@ class ConflictDetectionEngine:
 
             # Analyze for duplicates and contradictions
             # Core target matches (high similarity or matching subject/action/object)
-            is_semantically_similar = score >= 0.70
+            is_semantically_similar = score >= 0.60
             
             # Check fields
             sub_match = self._normalize_str(res["obligation_a"].subject) == self._normalize_str(res["obligation_b"].subject)
-            act_match = self._normalize_str(res["obligation_a"].action) == self._normalize_str(res["obligation_b"].action)
-            obj_match = self._normalize_str(res["obligation_a"].object) == self._normalize_str(res["obligation_b"].object)
-            target_match = sub_match and act_match and obj_match
+            norm_act_a = self._normalize_str(res["obligation_a"].action)
+            norm_act_b = self._normalize_str(res["obligation_b"].action)
+            act_match = norm_act_a == norm_act_b or (norm_act_a and norm_act_a in norm_act_b) or (norm_act_b and norm_act_b in norm_act_a)
+            norm_obj_a = self._normalize_str(res["obligation_a"].object)
+            norm_obj_b = self._normalize_str(res["obligation_b"].object)
+            obj_match = norm_obj_a == norm_obj_b or (norm_obj_a and norm_obj_a in norm_obj_b) or (norm_obj_b and norm_obj_b in norm_obj_a)
+            target_match = sub_match and (act_match or obj_match)
 
             if is_semantically_similar or target_match:
                 mod_a = res["obligation_a"].modality

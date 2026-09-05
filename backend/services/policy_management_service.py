@@ -78,7 +78,7 @@ class PolicyManagementService:
             self._db.scalars(
                 select(Policy)
                 .where(*conditions)
-                .options(selectinload(Policy.current_version))
+                .options(selectinload(Policy.current_version), selectinload(Policy.company))
                 .order_by(Policy.created_at.desc())
                 .limit(limit)
                 .offset(offset)
@@ -97,7 +97,7 @@ class PolicyManagementService:
         policy = self._db.scalar(
             select(Policy)
             .where(Policy.id == policy_id, Policy.deleted_at.is_(None))
-            .options(selectinload(Policy.current_version))
+            .options(selectinload(Policy.current_version), selectinload(Policy.company))
         )
         if policy is None:
             raise PolicyNotFoundError(f"Policy '{policy_id}' does not exist.")

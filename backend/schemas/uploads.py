@@ -23,7 +23,9 @@ class PolicyDocumentUploadResponse(BaseModel):
     policy_id: uuid.UUID
     policy_version_id: uuid.UUID
     company_id: uuid.UUID
+    company_name: str | None = None
     policy_title: str
     version_number: int
     description: str | None
     uploaded_by_user_id: uuid.UUID
+    uploaded_by_name: str | None = None

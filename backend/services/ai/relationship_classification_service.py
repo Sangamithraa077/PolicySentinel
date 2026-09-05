@@ -26,7 +26,7 @@ class RelationshipClassificationResult(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-from backend.services.ai.gemini_client import create_gemini_client
+from backend.services.ai.gemini_client import create_gemini_client, is_circuit_broken, trip_circuit_breaker
 
 class RelationshipClassificationService:
     def __init__(self, settings: Settings | None = None) -> None:
@@ -39,7 +39,7 @@ class RelationshipClassificationService:
         new_ob: Obligation | None
     ) -> RelationshipClassificationResult:
         """Classifies the relationship of two policy obligations using Gemini with fallback options."""
-        if self._client is None:
+        if self._client is None or is_circuit_broken():
             return self._get_mock_classification(existing_ob, new_ob)
 
         user_prompt = RELATIONSHIP_CLASSIFICATION_USER_PROMPT.format(
@@ -79,6 +79,8 @@ class RelationshipClassificationService:
             
             return RelationshipClassificationResult(**data)
         except Exception as exc:
+            if "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "quota" in str(exc).lower():
+                trip_circuit_breaker("429 Quota Exceeded")
             logger.error("Failed to generate relationship classification: %s. Falling back to mock.", exc)
             return self._get_mock_classification(existing_ob, new_ob)
 

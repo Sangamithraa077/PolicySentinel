@@ -40,27 +40,34 @@ class ComplianceRiskScoreEngine:
         high_severity_conflicts = [c for c in active_conflicts if c.severity.lower() == "high"]
         medium_severity_conflicts = [c for c in active_conflicts if c.severity.lower() == "medium"]
         low_severity_conflicts = [c for c in active_conflicts if c.severity.lower() == "low"]
-
-        deductions += len(high_severity_conflicts) * self.high_conflict_weight
-        deductions += len(medium_severity_conflicts) * self.medium_conflict_weight
-        deductions += len(low_severity_conflicts) * self.low_conflict_weight
-
-        # 2. Missing obligations (conflicts of type 'missing')
         missing_conflicts = [c for c in active_conflicts if c.conflict_type.lower() == "missing"]
-        deductions += len(missing_conflicts) * self.missing_obligation_weight
+
+        # Conflict density with diminishing penalty dampening
+        raw_conflict_penalty = (
+            (len(high_severity_conflicts) * 4.0) +
+            (len(medium_severity_conflicts) * 1.5) +
+            (len(low_severity_conflicts) * 0.5) +
+            (len(missing_conflicts) * 2.0)
+        )
+        if raw_conflict_penalty == 0:
+            conflict_penalty = 0.0
+        else:
+            conflict_penalty = min(40.0, 40.0 * (raw_conflict_penalty / (raw_conflict_penalty + 100.0)))
 
         # 3. Recommendations (Pending & Rejected counts)
         pending_recommendations = [r for r in recommendations if r.status == "Pending"]
         rejected_recommendations = [r for r in recommendations if r.status == "Rejected"]
 
-        deductions += len(pending_recommendations) * self.pending_recommendation_weight
-        deductions += len(rejected_recommendations) * self.rejected_recommendation_weight
+        pending_penalty = min(10.0, len(pending_recommendations) * 0.1)
+        rejected_penalty = min(5.0, len(rejected_recommendations) * 1.0)
 
-        # Compliance score: bounded 0 to 100
-        compliance_score = max(0.0, 100.0 - deductions)
+        deductions = conflict_penalty + pending_penalty + rejected_penalty
+
+        # Compliance score: bounded between 35.0 and 100.0
+        compliance_score = max(35.0, min(100.0, round(100.0 - deductions, 1)))
         
         # Risk Score: 100 - Compliance Score
-        risk_score = 100.0 - compliance_score
+        risk_score = round(100.0 - compliance_score, 1)
 
         # Risk Level mapping
         if risk_score <= 20:

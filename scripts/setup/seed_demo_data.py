@@ -68,11 +68,11 @@ def seed_demo_data():
     print("[Seed] Creating 5 companies...")
     companies = []
     company_names = [
-        "Aether Cloud Systems",
-        "Apex Global Finance",
-        "BioHealth Laboratories",
-        "Quantum Cryptography Corp",
-        "Vanguard Retail Group"
+        "Société Générale",
+        "Société Générale (Compliance & Ethics)",
+        "Société Générale (Information Security)",
+        "Société Générale (Global Solution Centre)",
+        "Société Générale (Corporate & Investment Banking)",
     ]
     for name in company_names:
         co = Company(name=name)
@@ -85,11 +85,12 @@ def seed_demo_data():
     password_val = hash_password("DemoPassword123!")
     users = []
     for co in companies:
+        slug = co.name.lower().replace(' ', '').replace('(', '').replace(')', '').replace('&', 'and').replace('é', 'e')[:20]
         admin_user = User(
             company_id=co.id,
-            email=f"admin@{co.name.lower().replace(' ', '')}.com",
+            email=f"compliance@{slug}.com",
             password_hash=password_val,
-            full_name="Jane Doe",
+            full_name="Compliance Officer",
             role=UserRole.ADMIN,
             is_active=True
         )

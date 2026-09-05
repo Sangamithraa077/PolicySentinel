@@ -26,6 +26,7 @@ export interface PolicyVersionSummary {
 export interface Policy {
   id: string;
   company_id: string;
+  company_name?: string | null;
   title: string;
   policy_code: string | null;
   category: string | null;

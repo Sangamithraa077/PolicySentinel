@@ -1,6 +1,5 @@
 import { useState, useEffect, type FormEvent, type ReactNode } from "react";
-import { AlertCircle, Loader2, Sparkles, UploadCloud } from "lucide-react";
-import { Link } from "react-router-dom";
+import { AlertCircle, Loader2, UploadCloud } from "lucide-react";
 
 import { ProgressBar } from "@/components/common/ProgressBar";
 import { ToastStack } from "@/components/common/Toast";
@@ -11,7 +10,7 @@ import { usePolicyUpload } from "@/hooks/usePolicyUpload";
 import { useToasts } from "@/hooks/useToasts";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { extractApiErrorMessage } from "@/utils/apiError";
-import { isValidUuid, validateUploadFile } from "@/utils/validateUploadFile";
+import { validateUploadFile } from "@/utils/validateUploadFile";
 
 interface FieldErrors {
   file?: string;
@@ -28,7 +27,10 @@ export function UploadPage() {
 
   const [file, setFile] = useState<File | null>(null);
   const [companyId, setCompanyId] = useState(identity.companyId);
-  const [uploadedByUserId, setUploadedByUserId] = useState(identity.userId);
+  const [newCompanyName, setNewCompanyName] = useState("");
+  const [uploadedByName, setUploadedByName] = useState(() => {
+    return localStorage.getItem("policysentinel-uploader-name") || "Compliance Officer";
+  });
   const [policyTitle, setPolicyTitle] = useState("");
   const [versionNumber, setVersionNumber] = useState("1");
   const [description, setDescription] = useState("");
@@ -39,13 +41,13 @@ export function UploadPage() {
   const { toasts, push: pushToast, dismiss: dismissToast } = useToasts();
 
   useEffect(() => {
-    setCompanyId(identity.companyId);
-    setUploadedByUserId(identity.userId);
-  }, [identity]);
+    if (identity.companyId && !addingNewCompany) {
+      setCompanyId(identity.companyId);
+    }
+  }, [identity.companyId, addingNewCompany]);
 
-  // A dropdown of known companies by default; free-text entry only once
-  // the user asks for it, or when there's nothing to pick from yet (the
-  // very first upload into a brand-new workspace).
+  // A dropdown of known companies by default; free-text entry once
+  // the user clicks "New company", or when there's nothing to pick from yet.
   const showNewCompanyInput = addingNewCompany || (directoryQuery.isSuccess && directory.length === 0);
 
   function validate(): FieldErrors {
@@ -58,16 +60,18 @@ export function UploadPage() {
       if (fileError) errors.file = fileError;
     }
 
-    if (!companyId.trim()) {
-      errors.companyId = "Company ID is required.";
-    } else if (!isValidUuid(companyId)) {
-      errors.companyId = "Enter a valid UUID.";
+    if (showNewCompanyInput) {
+      if (!newCompanyName.trim()) {
+        errors.companyId = "Company name is required.";
+      }
+    } else {
+      if (!companyId.trim()) {
+        errors.companyId = "Please select a company.";
+      }
     }
 
-    if (!uploadedByUserId.trim()) {
-      errors.uploadedByUserId = "Uploader user ID is required.";
-    } else if (!isValidUuid(uploadedByUserId)) {
-      errors.uploadedByUserId = "Enter a valid UUID.";
+    if (!uploadedByName.trim()) {
+      errors.uploadedByUserId = "Uploader name is required.";
     }
 
     if (!policyTitle.trim()) {
@@ -92,8 +96,10 @@ export function UploadPage() {
     upload.mutate(
       {
         file,
-        companyId: companyId.trim(),
-        uploadedByUserId: uploadedByUserId.trim(),
+        companyId: showNewCompanyInput ? undefined : companyId.trim(),
+        companyName: showNewCompanyInput ? newCompanyName.trim() : undefined,
+        uploadedByName: uploadedByName.trim(),
+        uploadedByUserId: showNewCompanyInput ? undefined : (identity.userId || undefined),
         policyTitle: policyTitle.trim(),
         versionNumber: Number(versionNumber),
         description,
@@ -101,11 +107,14 @@ export function UploadPage() {
       {
         onSuccess: (result) => {
           pushToast("success", `"${result.policy_title}" uploaded successfully.`);
-          setIdentity({ companyId: companyId.trim(), userId: uploadedByUserId.trim() });
+          localStorage.setItem("policysentinel-uploader-name", uploadedByName.trim());
+          setIdentity({ companyId: result.company_id, userId: result.uploaded_by_user_id });
           setFile(null);
           setPolicyTitle("");
           setDescription("");
           setVersionNumber("1");
+          setNewCompanyName("");
+          setAddingNewCompany(false);
           setFieldErrors({});
         },
         onError: (error) => {
@@ -150,18 +159,24 @@ export function UploadPage() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={companyId}
-                  onChange={(event) => setCompanyId(event.target.value)}
+                  value={newCompanyName}
+                  onChange={(event) => {
+                    setNewCompanyName(event.target.value);
+                    setFieldErrors((prev) => ({ ...prev, companyId: undefined }));
+                  }}
                   disabled={upload.isPending}
-                  placeholder="Paste or generate a new company ID"
+                  placeholder="Enter meaningful company name (e.g. Tata Consultancy Services)"
                   className={inputClasses(Boolean(fieldErrors.companyId))}
                 />
                 {directory.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setAddingNewCompany(false)}
+                    onClick={() => {
+                      setAddingNewCompany(false);
+                      setNewCompanyName("");
+                    }}
                     disabled={upload.isPending}
-                    className="shrink-0 rounded-md border border-border px-3 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                    className="shrink-0 rounded-md border border-border px-3 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors"
                   >
                     Choose existing
                   </button>
@@ -171,7 +186,10 @@ export function UploadPage() {
               <div className="flex gap-2">
                 <select
                   value={companyId}
-                  onChange={(event) => setCompanyId(event.target.value)}
+                  onChange={(event) => {
+                    setCompanyId(event.target.value);
+                    setFieldErrors((prev) => ({ ...prev, companyId: undefined }));
+                  }}
                   disabled={upload.isPending}
                   className={inputClasses(Boolean(fieldErrors.companyId))}
                 >
@@ -180,7 +198,7 @@ export function UploadPage() {
                   </option>
                   {directory.map((entry) => (
                     <option key={entry.companyId} value={entry.companyId}>
-                      {companyLabel(entry.companyId)} · {entry.policyCount}{" "}
+                      {entry.companyName || companyLabel(entry.companyId)} · {entry.policyCount}{" "}
                       {entry.policyCount === 1 ? "policy" : "policies"}
                     </option>
                   ))}
@@ -189,10 +207,10 @@ export function UploadPage() {
                   type="button"
                   onClick={() => {
                     setAddingNewCompany(true);
-                    setCompanyId("");
+                    setNewCompanyName("");
                   }}
                   disabled={upload.isPending}
-                  className="shrink-0 rounded-md border border-border px-3 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  className="shrink-0 rounded-md border border-border px-3 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors"
                 >
                   New company
                 </button>
@@ -200,47 +218,19 @@ export function UploadPage() {
             )}
           </Field>
 
-          {showNewCompanyInput && (
-            <button
-              type="button"
-              onClick={() => setCompanyId(crypto.randomUUID())}
-              disabled={upload.isPending}
-              className="-mt-3 flex w-fit items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Generate a new company ID
-            </button>
-          )}
-
           <Field label="Uploaded by" error={fieldErrors.uploadedByUserId}>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={uploadedByUserId}
-                onChange={(event) => setUploadedByUserId(event.target.value)}
-                disabled={upload.isPending}
-                placeholder="Your user ID"
-                className={inputClasses(Boolean(fieldErrors.uploadedByUserId))}
-              />
-              <button
-                type="button"
-                onClick={() => setUploadedByUserId(crypto.randomUUID())}
-                disabled={upload.isPending}
-                title="Generate a new user ID"
-                className="shrink-0 rounded-md border border-border px-3 text-neutral-500 hover:bg-neutral-50 hover:text-brand-600 dark:border-neutral-700 dark:hover:bg-neutral-800"
-              >
-                <Sparkles className="h-4 w-4" />
-              </button>
-            </div>
+            <input
+              type="text"
+              value={uploadedByName}
+              onChange={(event) => {
+                setUploadedByName(event.target.value);
+                setFieldErrors((prev) => ({ ...prev, uploadedByUserId: undefined }));
+              }}
+              disabled={upload.isPending}
+              placeholder="Enter your name (e.g. Abishek, Compliance Officer)"
+              className={inputClasses(Boolean(fieldErrors.uploadedByUserId))}
+            />
           </Field>
-
-          <p className="-mt-3 text-xs text-neutral-400">
-            First time here? Generate an ID for each, then save them in{" "}
-            <Link to="/settings" className="underline hover:text-neutral-600 dark:hover:text-neutral-300">
-              Settings
-            </Link>{" "}
-            so every screen remembers who you are.
-          </p>
 
           <Field label="Policy title" error={fieldErrors.policyTitle}>
             <input

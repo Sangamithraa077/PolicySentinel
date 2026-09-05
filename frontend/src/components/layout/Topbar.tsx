@@ -19,7 +19,7 @@ export function Topbar() {
   const hasActiveCompany = Boolean(identity.companyId);
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface/80 px-6 backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900/80">
+    <header className="relative z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6 backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900">
       <div className="relative" ref={menuRef}>
         <button
           type="button"
@@ -27,12 +27,15 @@ export function Topbar() {
           className="flex items-center gap-2 rounded-full border border-border bg-surface-muted/60 px-3.5 py-1.5 text-sm font-medium text-neutral-700 hover:bg-surface-muted dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-200 dark:hover:bg-neutral-800 transition-colors"
         >
           <Building2 className="h-4 w-4 text-brand-500" />
-          {hasActiveCompany ? companyLabel(identity.companyId) : "All companies"}
+          {hasActiveCompany
+            ? directory.find((e) => e.companyId === identity.companyId)?.companyName ||
+              companyLabel(identity.companyId)
+            : "All companies"}
           <ChevronDown className="h-3.5 w-3.5 text-neutral-400" />
         </button>
 
         {open && (
-          <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-xl border border-border bg-surface py-1.5 shadow-xl shadow-black/5 dark:border-neutral-700 dark:bg-neutral-900">
+          <div className="absolute left-0 top-full z-50 mt-2 w-84 rounded-xl border border-border bg-white py-1.5 shadow-2xl ring-1 ring-black/10 dark:border-neutral-700 dark:bg-neutral-900 dark:ring-white/10 max-h-[75vh] overflow-y-auto">
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
               Switch workspace
             </div>
@@ -59,7 +62,7 @@ export function Topbar() {
               >
                 <span className="flex flex-col">
                   <span className="font-medium text-foreground dark:text-neutral-100">
-                    {companyLabel(entry.companyId)}
+                    {entry.companyName || companyLabel(entry.companyId)}
                   </span>
                   <span className="text-neutral-400">
                     {entry.policyCount} {entry.policyCount === 1 ? "policy" : "policies"}

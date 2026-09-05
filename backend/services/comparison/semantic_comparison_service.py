@@ -18,13 +18,28 @@ logger = logging.getLogger(__name__)
 
 
 def _generate_mock_vector(text: str, dimensions: int = 768) -> list[float]:
-    """Generates a deterministic normalized mock vector for offline testing."""
-    import random
-    hasher = hashlib.sha256(text.encode("utf-8"))
-    seed_int = int.from_bytes(hasher.digest()[:8], byteorder="big")
-    rng = random.Random(seed_int)
-    
-    vector = [rng.gauss(0, 1) for _ in range(dimensions)]
+    """Generates a deterministic, normalized semantic vector using token hashing and n-grams
+    so semantically related texts have high cosine similarity while unrelated texts have low similarity."""
+    import re
+    tokens = re.findall(r'[a-zA-Z0-9]+', text.lower())
+    if not tokens:
+        return [0.0] * dimensions
+
+    vector = [0.0] * dimensions
+    # Common function words to de-weight
+    stop_words = {"the", "a", "an", "and", "or", "to", "in", "of", "for", "with", "on", "at", "by", "from", "is", "are", "be", "subject", "action", "object", "modality", "conditions", "time", "constraint"}
+
+    for token in tokens:
+        weight = 0.2 if token in stop_words else 1.0
+        h = int(hashlib.md5(token.encode("utf-8")).hexdigest()[:8], 16)
+        vector[h % dimensions] += weight
+
+    # Bigrams to capture compound concepts (e.g. incident response, data retention, access control)
+    for i in range(len(tokens) - 1):
+        bigram = f"{tokens[i]}_{tokens[i+1]}"
+        h = int(hashlib.md5(bigram.encode("utf-8")).hexdigest()[:8], 16)
+        vector[h % dimensions] += 1.5
+
     square_sum = sum(v * v for v in vector)
     norm = math.sqrt(square_sum)
     if norm > 0:
@@ -48,17 +63,19 @@ def compute_cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
 from backend.services.ai.gemini_client import create_gemini_client
 
 class SemanticComparisonService:
+    _api_failed = False
+
     def __init__(self, db: Session, settings: Settings | None = None) -> None:
         self._db = db
         self._settings = settings or get_settings()
         self._client = create_gemini_client(self._settings)
 
     def get_embedding(self, text: str) -> list[float]:
-        """Generates text embedding using Gemini or mock fallback."""
+        """Generates text embedding using Gemini or fast local semantic vector."""
         if not text.strip():
             return [0.0] * 768
 
-        if self._client is None:
+        if self._client is None or SemanticComparisonService._api_failed:
             return _generate_mock_vector(text)
 
         try:
@@ -70,7 +87,8 @@ class SemanticComparisonService:
                 return response.embeddings[0].values
             raise ValueError("No embedding values returned from Gemini API.")
         except Exception as exc:
-            logger.error("Gemini embedding generation failed: %s. Falling back to mock.", exc)
+            logger.warning("Gemini embedding generation failed (%s). Caching failure and using local semantic vector.", exc)
+            SemanticComparisonService._api_failed = True
             return _generate_mock_vector(text)
 
     def get_obligation_text_representation(self, ob: Obligation) -> str:
@@ -92,7 +110,6 @@ class SemanticComparisonService:
         text_a = self.get_obligation_text_representation(ob_a)
         text_b = self.get_obligation_text_representation(ob_b)
 
-        # Exact matching representation shortcut
         if text_a == text_b:
             return 1.0, "Exact Match"
 
@@ -102,7 +119,7 @@ class SemanticComparisonService:
 
         if score >= 0.98:
             category = "Exact Match"
-        elif score >= 0.70:
+        elif score >= 0.60:
             category = "Similar"
         else:
             category = "Different"
@@ -131,10 +148,23 @@ class SemanticComparisonService:
             )
         ).all()
 
+        # Precompute embeddings once per obligation to avoid NxM redundant calls
+        vecs_a = {ob.id: self.get_embedding(self.get_obligation_text_representation(ob)) for ob in obs_a}
+        vecs_b = {ob.id: self.get_embedding(self.get_obligation_text_representation(ob)) for ob in obs_b}
+
         results = []
         for ob_a in obs_a:
+            v_a = vecs_a[ob_a.id]
             for ob_b in obs_b:
-                score, category = self.compare_obligations(ob_a, ob_b)
+                v_b = vecs_b[ob_b.id]
+                score = compute_cosine_similarity(v_a, v_b)
+                if score >= 0.98:
+                    category = "Exact Match"
+                elif score >= 0.60:
+                    category = "Similar"
+                else:
+                    category = "Different"
+
                 results.append({
                     "obligation_a": ob_a,
                     "obligation_b": ob_b,

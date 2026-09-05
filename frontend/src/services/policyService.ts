@@ -5,8 +5,10 @@ import type { PolicyDocumentUploadResponse, PolicyListResponse } from "@/types/p
 
 export interface UploadPolicyDocumentParams {
   file: File;
-  companyId: string;
-  uploadedByUserId: string;
+  companyId?: string;
+  companyName?: string;
+  uploadedByUserId?: string;
+  uploadedByName?: string;
   policyTitle: string;
   versionNumber: number;
   description: string;
@@ -19,8 +21,18 @@ export async function uploadPolicyDocument(
 ): Promise<PolicyDocumentUploadResponse> {
   const formData = new FormData();
   formData.append("file", params.file);
-  formData.append("company_id", params.companyId);
-  formData.append("uploaded_by_user_id", params.uploadedByUserId);
+  if (params.companyId) {
+    formData.append("company_id", params.companyId);
+  }
+  if (params.companyName) {
+    formData.append("company_name", params.companyName);
+  }
+  if (params.uploadedByUserId) {
+    formData.append("uploaded_by_user_id", params.uploadedByUserId);
+  }
+  if (params.uploadedByName) {
+    formData.append("uploaded_by_name", params.uploadedByName);
+  }
   formData.append("policy_title", params.policyTitle);
   formData.append("version_number", String(params.versionNumber));
   if (params.description.trim()) {

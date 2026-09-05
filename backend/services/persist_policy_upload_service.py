@@ -29,7 +29,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from backend.domain.exceptions.policy_exceptions import CompanyNotFoundError, UserNotFoundError
@@ -54,10 +54,12 @@ class PersistedPolicyUpload:
     policy_id: uuid.UUID
     policy_version_id: uuid.UUID
     company_id: uuid.UUID
+    company_name: str
     policy_title: str
     version_number: int
     description: str | None
     uploaded_by_user_id: uuid.UUID
+    uploaded_by_name: str
     original_filename: str
     stored_filename: str
     storage_path: str
@@ -77,51 +79,164 @@ class PersistPolicyUploadService:
         self,
         validated: ValidatedPolicyDocument,
         *,
-        company_id: uuid.UUID,
-        uploaded_by_user_id: uuid.UUID,
+        company_id: uuid.UUID | str | None = None,
+        company_name: str | None = None,
+        uploaded_by_user_id: uuid.UUID | str | None = None,
+        uploaded_by_name: str | None = None,
         policy_title: str,
         version_number: int,
         description: str | None,
-        auto_create_missing: bool = False,
+        auto_create_missing: bool = True,
     ) -> PersistedPolicyUpload:
         stored: StoredFile | None = None
         try:
-            company = self._db.scalar(
-                select(Company).where(Company.id == company_id, Company.deleted_at.is_(None))
-            )
-            if company is None:
-                if auto_create_missing:
+            # 1. Resolve Company
+            company = None
+            if company_name and company_name.strip():
+                c_name = company_name.strip()
+                company = self._db.scalar(
+                    select(Company).where(
+                        func.lower(Company.name) == c_name.lower(),
+                        Company.deleted_at.is_(None)
+                    )
+                )
+                if company is None:
+                    new_cid = None
+                    if company_id:
+                        try:
+                            new_cid = uuid.UUID(str(company_id))
+                        except (ValueError, TypeError):
+                            pass
+                    if not new_cid:
+                        new_cid = uuid.uuid4()
+                    
                     company = Company(
-                        id=company_id,
-                        name=f"Company {str(company_id)[:8]}",
-                        industry="Technology",
+                        id=new_cid,
+                        name=c_name,
+                        industry="Enterprise",
                         jurisdiction="General",
-                        registration_number=f"REG-{str(company_id)[:8].upper()}",
+                        registration_number=f"REG-{str(new_cid)[:8].upper()}",
                     )
                     self._db.add(company)
                     self._db.flush()
-                else:
-                    raise CompanyNotFoundError(f"Company '{company_id}' does not exist.")
 
-            uploader = self._db.scalar(
-                select(User).where(User.id == uploaded_by_user_id, User.deleted_at.is_(None))
-            )
-            if uploader is None:
-                if auto_create_missing:
-                    from backend.models.enums import UserRole
-                    uploader = User(
-                        id=uploaded_by_user_id,
-                        company_id=company.id,
-                        email=f"user-{str(uploaded_by_user_id)[:8]}@{company.name.lower().replace(' ', '')}.com",
-                        password_hash="",  # Not checking passwords for uploads, or set a dummy hashed one
-                        full_name=f"User {str(uploaded_by_user_id)[:8]}",
-                        role=UserRole.ADMIN,
-                        is_active=True,
+            if company is None and company_id:
+                cid = None
+                try:
+                    cid = uuid.UUID(str(company_id))
+                except (ValueError, TypeError):
+                    c_name = str(company_id).strip()
+                    company = self._db.scalar(
+                        select(Company).where(
+                            func.lower(Company.name) == c_name.lower(),
+                            Company.deleted_at.is_(None)
+                        )
                     )
-                    self._db.add(uploader)
-                    self._db.flush()
+                    if company is None:
+                        new_cid = uuid.uuid4()
+                        company = Company(
+                            id=new_cid,
+                            name=c_name,
+                            industry="Enterprise",
+                            jurisdiction="General",
+                            registration_number=f"REG-{str(new_cid)[:8].upper()}",
+                        )
+                        self._db.add(company)
+                        self._db.flush()
+
+                if company is None and cid:
+                    company = self._db.scalar(
+                        select(Company).where(Company.id == cid, Company.deleted_at.is_(None))
+                    )
+                    if company is None:
+                        if auto_create_missing:
+                            company = Company(
+                                id=cid,
+                                name=f"Company {str(cid)[:8]}",
+                                industry="Enterprise",
+                                jurisdiction="General",
+                                registration_number=f"REG-{str(cid)[:8].upper()}",
+                            )
+                            self._db.add(company)
+                            self._db.flush()
+                        else:
+                            raise CompanyNotFoundError(f"Company '{cid}' does not exist.")
+
+            if company is None:
+                first_c = self._db.scalar(select(Company).where(Company.deleted_at.is_(None)).order_by(Company.created_at))
+                if first_c:
+                    company = first_c
                 else:
-                    raise UserNotFoundError(f"User '{uploaded_by_user_id}' does not exist.")
+                    new_cid = uuid.uuid4()
+                    company = Company(
+                        id=new_cid,
+                        name="Default Organization",
+                        industry="Enterprise",
+                        jurisdiction="General",
+                        registration_number=f"REG-{str(new_cid)[:8].upper()}",
+                    )
+                    self._db.add(company)
+                    self._db.flush()
+
+            # 2. Resolve Uploader User
+            uploader = None
+            u_name = (uploaded_by_name or "").strip() or "Compliance Officer"
+            from backend.models.enums import UserRole
+
+            # 1) Check if user by name already exists under THIS company
+            uploader = self._db.scalar(
+                select(User).where(
+                    func.lower(User.full_name) == u_name.lower(),
+                    User.company_id == company.id,
+                    User.deleted_at.is_(None)
+                )
+            )
+
+            # 2) If uploaded_by_user_id provided, check if it belongs to THIS company
+            if uploader is None and uploaded_by_user_id:
+                try:
+                    uid = uuid.UUID(str(uploaded_by_user_id))
+                    existing_user = self._db.scalar(
+                        select(User).where(User.id == uid, User.deleted_at.is_(None))
+                    )
+                    if existing_user and existing_user.company_id == company.id:
+                        uploader = existing_user
+                except (ValueError, TypeError):
+                    pass
+
+            # 3) Check if company already has any user we can use
+            if uploader is None:
+                any_user_in_comp = self._db.scalar(
+                    select(User).where(User.company_id == company.id, User.deleted_at.is_(None))
+                )
+                if any_user_in_comp and not (uploaded_by_name or "").strip():
+                    uploader = any_user_in_comp
+
+            # 4) Create a fresh user for this company with a NEW UUID and unique email
+            if uploader is None:
+                new_uid = uuid.uuid4()
+                clean_user = "".join(c for c in u_name.lower() if c.isalnum()) or "user"
+                clean_comp = "".join(c for c in company.name.lower() if c.isalnum()) or "company"
+                candidate_email = f"{clean_user}@{clean_comp}.com"
+
+                # Check if email is already taken in the system
+                email_exists = self._db.scalar(
+                    select(User).where(func.lower(User.email) == candidate_email.lower(), User.deleted_at.is_(None))
+                )
+                if email_exists:
+                    candidate_email = f"{clean_user}-{str(new_uid)[:8]}@{clean_comp}.com"
+
+                uploader = User(
+                    id=new_uid,
+                    company_id=company.id,
+                    email=candidate_email,
+                    password_hash="",
+                    full_name=u_name,
+                    role=UserRole.ADMIN,
+                    is_active=True,
+                )
+                self._db.add(uploader)
+                self._db.flush()
 
             policy = Policy(
                 company=company,
@@ -289,10 +404,12 @@ class PersistPolicyUploadService:
             policy_id=policy.id,
             policy_version_id=version.id,
             company_id=company.id,
+            company_name=company.name,
             policy_title=policy.title,
             version_number=version.version_number,
             description=version.description,
             uploaded_by_user_id=uploader.id,
+            uploaded_by_name=uploader.full_name,
             original_filename=validated.original_filename,
             stored_filename=stored.stored_filename,
             storage_path=stored.storage_path,

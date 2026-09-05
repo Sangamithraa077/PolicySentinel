@@ -27,7 +27,7 @@ class StrengthConflictResult(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-from backend.services.ai.gemini_client import create_gemini_client
+from backend.services.ai.gemini_client import create_gemini_client, is_circuit_broken, trip_circuit_breaker
 
 class StrengthConflictDetectionService:
     def __init__(self, settings: Settings | None = None) -> None:
@@ -40,7 +40,7 @@ class StrengthConflictDetectionService:
         ob_b: Obligation | None
     ) -> StrengthConflictResult:
         """Analyzes modality differences between two obligations using Gemini with fallback options."""
-        if self._client is None:
+        if self._client is None or is_circuit_broken():
             return self._get_mock_strength_conflict(ob_a, ob_b)
 
         user_prompt = STRENGTH_CONFLICT_USER_PROMPT.format(
@@ -72,6 +72,8 @@ class StrengthConflictDetectionService:
             
             return StrengthConflictResult(**data)
         except Exception as exc:
+            if "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "quota" in str(exc).lower():
+                trip_circuit_breaker("429 Quota Exceeded")
             logger.error("Failed to detect strength conflict with AI: %s. Falling back to mock.", exc)
             return self._get_mock_strength_conflict(ob_a, ob_b)
 

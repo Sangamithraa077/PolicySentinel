@@ -89,7 +89,6 @@ class PolicyHealthScoreEngine:
         if not policy:
             return PolicyHealthScoreResult(0.0, "F", "Policy not found.", ["Policy record missing"])
 
-        score = self._weights["base_score"]
         risk_factors: List[str] = []
         
         # 1. Fetch active conflicts involving this policy
@@ -109,23 +108,28 @@ class PolicyHealthScoreEngine:
             severity = (conf.severity or "medium").lower()
             if severity == "critical":
                 critical_count += 1
-                score -= self._weights["conflict_penalty_critical"]
             elif severity == "high":
                 high_count += 1
-                score -= self._weights["conflict_penalty_high"]
             elif severity == "low":
                 low_count += 1
-                score -= self._weights["conflict_penalty_low"]
             else:
                 med_count += 1
-                score -= self._weights["conflict_penalty_medium"]
 
         if critical_count > 0 or high_count > 0:
             risk_factors.append(f"Contains {critical_count} critical and {high_count} high severity conflicts.")
         elif med_count > 0:
             risk_factors.append(f"Contains {med_count} medium severity conflicts.")
 
-        # 2. Fetch obligations for this policy to check mappings and staleness
+        # Conflict Sub-score (0 to 100) with diminishing penalty dampening:
+        raw_conflict_penalty = (critical_count * 15.0) + (high_count * 8.0) + (med_count * 3.0) + (low_count * 1.0)
+        if raw_conflict_penalty == 0:
+            conflict_score = 100.0
+        else:
+            # Scaled so even heavy conflicts bound penalty to 75%, leaving room for mapping & freshness
+            conflict_penalty = min(75.0, 75.0 * (raw_conflict_penalty / (raw_conflict_penalty + 50.0)))
+            conflict_score = max(10.0, 100.0 - conflict_penalty)
+
+        # 2. Fetch obligations for this policy to check mappings
         obligations = self._db.scalars(
             select(Obligation).where(
                 Obligation.policy_id == policy_id,
@@ -133,6 +137,7 @@ class PolicyHealthScoreEngine:
             )
         ).all()
         
+        total_obs = len(obligations)
         missing_mappings_count = 0
         mapped_count = 0
         
@@ -145,12 +150,14 @@ class PolicyHealthScoreEngine:
             )
             if not mapping or mapping.framework_name == "NONE":
                 missing_mappings_count += 1
-                score -= self._weights["missing_mapping_penalty"]
             else:
                 mapped_count += 1
 
         if missing_mappings_count > 0:
             risk_factors.append(f"Has {missing_mappings_count} obligations missing regulatory framework mappings.")
+
+        # Mapping Sub-score (0 to 100): percentage of mapped obligations
+        mapping_score = (mapped_count / total_obs * 100.0) if total_obs > 0 else 100.0
 
         # 3. Check for stale policy versions
         versions = self._db.scalars(
@@ -167,10 +174,17 @@ class PolicyHealthScoreEngine:
             stale_res = stale_service.detect_staleness(ver)
             if stale_res.status in ["Review Required", "Outdated"]:
                 stale_versions_count += 1
-                score -= self._weights["stale_obligation_penalty"]
 
         if stale_versions_count > 0:
             risk_factors.append(f"Policy contains {stale_versions_count} stale or review-required revisions.")
+
+        # Freshness Sub-score (0 to 100):
+        if not versions:
+            freshness_score = 70.0
+        elif stale_versions_count == 0:
+            freshness_score = 100.0
+        else:
+            freshness_score = max(40.0, 100.0 - (stale_versions_count * 30.0))
 
         # 4. Offsetting bonuses for approved recommendations
         approved_recommendations_count = 0
@@ -184,29 +198,37 @@ class PolicyHealthScoreEngine:
             )
             if rec:
                 approved_recommendations_count += 1
-                score += self._weights["approved_recommendation_bonus"]
 
-        # Clamp score between 0.0 and 100.0
-        score = max(0.0, min(100.0, score))
+        remediation_bonus = min(10.0, approved_recommendations_count * 2.5)
+
+        # COMPOSITE WEIGHTED HEALTH SCORE:
+        # Conflict Health: 40%, Regulatory Coverage: 35%, Freshness: 25% + Bonus
+        composite_score = (
+            (conflict_score * 0.40) +
+            (mapping_score * 0.35) +
+            (freshness_score * 0.25) +
+            remediation_bonus
+        )
+        score = max(5.0, min(100.0, round(composite_score, 1)))
         
         # Calculate grade
-        if score >= 90.0:
+        if score >= 85.0:
             grade = "A"
-        elif score >= 80.0:
-            grade = "B"
         elif score >= 70.0:
+            grade = "B"
+        elif score >= 55.0:
             grade = "C"
-        elif score >= 60.0:
+        elif score >= 40.0:
             grade = "D"
         else:
             grade = "F"
 
         # Formulate summary
-        if score >= 90.0:
+        if score >= 85.0:
             summary = "Excellent health. The policy has high regulatory alignment, no severe unresolved conflicts, and up-to-date revisions."
-        elif score >= 75.0:
+        elif score >= 70.0:
             summary = "Good health. Few moderate issues exist; review unresolved conflict findings or missing compliance mappings."
-        elif score >= 60.0:
+        elif score >= 55.0:
             summary = "Fair health. Policy possesses several compliance risks, outdated effective dates, or active conflicts requiring resolution."
         else:
             summary = "Critical risk. Policy has significant gaps, missing external standard alignments, or severe structural conflicts."
