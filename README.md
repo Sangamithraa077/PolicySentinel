@@ -59,32 +59,44 @@ flowchart TD
         B --> Out1["Clean Raw Text, Sections & Metadata"]
     end
 
-    subgraph Step2["Step 2: Hierarchy & AI Obligation Extraction"]
+    subgraph Step2["Step 2: Hierarchy & Obligation Extraction"]
         Out1 --> C["Clause Segmentation Engine"]
         C --> Out2["Structured Clause Tree Outline\n(Numbered Clauses & Paragraphs)"]
-        Out2 --> D["Google Gemini AI Obligation Extractor"]
-        D --> Out3["Structured Obligation Triples\n(Subject, Modality, Action, Object)"]
+        Out2 --> D{"Google Gemini AI\nObligation Extractor"}
+        D -->|Normal / Valid Quota| Out3["Structured Obligation Triples\n(Subject, Modality, Action, Object)"]
+        D -.->|429 Quota / Circuit Tripped| FB1["Local Heuristic & Regex Fallback\n(Deterministic Modality Rules)"]
+        FB1 --> Out3
     end
 
-    subgraph Step3["Step 3: Multi-Dimensional Conflict Analysis"]
+    subgraph Step3["Step 3: Multi-Dimensional Conflict Analysis & Regulatory Mapping"]
         Out3 --> E["Semantic Comparison & Formal Logic Engine"]
         E --> Out4["Flagged Conflict Matrix\n(Contradictions, Modality Shifts, Temporal Rotations)"]
-        Out3 --> RegMap["AI Regulatory Mapping Engine"]
-        RegMap --> RegOut["Regulatory Mappings\n(GDPR, ISO 27001, SEBI, RBI)"]
+        Out3 --> RegMap{"AI Regulatory\nMapping Engine"}
+        RegMap -->|Normal| RegOut["Regulatory Mappings\n(GDPR, ISO 27001, SEBI, RBI)"]
+        RegMap -.->|Circuit Tripped| FB2["Deterministic Rule Base\n(Offline Regulatory KB)"]
+        FB2 --> RegOut
     end
 
     subgraph Step4["Step 4: Knowledge Graph, Actionable Redlines & Reports"]
-        Out4 --> F["AI Redline Recommendation Engine"]
+        Out4 --> F{"AI Redline\nRecommendation Engine"}
+        F -->|Normal / Local Fallback| Out5["Drafted Redline Text &\nAccept/Reject Audit Trail"]
         Out4 --> G["PostgreSQL 16 & Neo4j 5 Knowledge Graph"]
-        F --> Out5["Drafted Redline Text & Accept/Reject Audit Trail"]
-        G --> Out6["Interactive Knowledge Graph & Downloadable Executive PDF Report"]
+        G --> Out6["Interactive Knowledge Graph &\nDownloadable Executive PDF Report"]
     end
+
+    CB["🛡️ AI Circuit Breaker (gemini_client.py)\nAuto-trips on 429 Quota / Network Outage\nZero-downtime failover to local engine"] -.-> D
+    CB -.-> RegMap
+    CB -.-> F
 
     style Step1 fill:#F5F3FF,stroke:#7C3AED,color:#4C1D95
     style Step2 fill:#FFFFFF,stroke:#8B5CF6,color:#4C1D95
     style Step3 fill:#F5F3FF,stroke:#7C3AED,color:#4C1D95
     style Step4 fill:#FFFFFF,stroke:#6D28D9,color:#4C1D95
+    style CB fill:#FEF3C7,stroke:#D97706,color:#92400E
 ```
+
+> **High-Availability AI Circuit Breaker**: PolicySentinel incorporates a central, fail-safe AI Circuit Breaker (`gemini_client.py`). If the Google Gemini API hits rate limits (HTTP 429 `RESOURCE_EXHAUSTED`), an invalid key, or network downtime, the breaker trips globally. All 8 AI microservices automatically transition to local deterministic heuristic engines (regex parsing, deontic modality logic, offline regulatory cross-walks) guaranteeing zero downtime, zero 500 errors, and continuous policy analysis.
+
 
 ---
 
@@ -92,16 +104,18 @@ flowchart TD
 
 | Module | Route / Page | Capabilities |
 | :--- | :--- | :--- |
-| **Executive Dashboard** | `/dashboard` | Executive Compliance Score dial (0–100), active/resolved conflict counts, pending recommendations, risk distribution matrix, and audit trail. |
-| **Policy Ingestion** | `/upload` | Ingestion of PDF, DOCX, TXT documents with custom Company and Uploader names, progress tracking, and multi-tenant user provisioning. |
+| **Executive Dashboard** | `/` or `/executive-dashboard` | Executive Compliance Score dial (0–100), active/resolved conflict counts, pending recommendations, risk distribution matrix, and audit trail. |
+| **Policy Library** | `/policies` | Centralized corporate policy repository with real-time text search, department categorization, version tracking, and direct clause drilling. |
+| **Policy Ingestion** | `/upload` | Ingestion of PDF, DOCX, TXT documents with custom Company and Uploader names, live progress tracking, and multi-tenant user provisioning. |
 | **Clause Viewer** | `/clauses` | Clause hierarchy navigation, clause numbering, text preview, confidence scoring, and policy filtering. |
 | **Obligation Viewer** | `/obligations` | Modality filtering (`MUST`, `SHALL`, `SHOULD`, `MAY`), structured Subject-Action-Object triples, and source clause links. |
 | **Conflict Dashboard** | `/conflicts` | Side-by-side clause comparison, conflict taxonomy (Direct Contradiction, Modality Erosion, Temporal Mismatch, Scope Overlap, Threshold Discrepancy). |
 | **AI Redlines & Approvals** | `/recommendations` | AI-generated redlines and suggested actions with one-click **Accept / Reject** human-in-the-loop audit logging. |
 | **Obligation Relationships** | `/relationships` | Cross-policy obligation categorizations: `CONFLICT`, `REDUNDANT`, `COMPLEMENTARY`, `UNRELATED`. |
 | **Advanced Findings** | `/findings` | In-depth cross-policy findings matrix with severity breakdowns. |
-| **Regulatory Knowledge Base** | `/regulatory` | Real-time mapping against **GDPR**, **ISO 27001**, **SEBI Cybersecurity Framework**, and **RBI Master Direction**, plus per-policy Health Scores (A/B/C grades). |
-| **Neo4j Knowledge Graph** | `/graph` | Interactive visual node-edge graph, policy impact analysis traversals, and semantic entity search. |
+| **Regulatory Knowledge Base** | `/regulatory-dashboard` | Real-time mapping against **GDPR**, **ISO 27001**, **SEBI Cybersecurity Framework**, and **RBI Master Direction**, plus per-policy Health Scores (A/B/C grades). |
+| **Neo4j Knowledge Graph** | `/knowledge-graph` | Interactive visual node-edge graph, policy impact analysis traversals, and semantic entity search. |
+| **Guided Demo Mode** | `/demo-mode` | Interactive step-by-step walkthrough simulating policy upload, conflict detection, knowledge graph traversal, and redline resolution. |
 | **Audit Logs & PDF Reports** | `/reports` | Immutable activity trail with exportable, signed executive compliance PDF reports (`/api/v1/compliance-dashboard/download`). |
 | **Multi-Company Directory** | *Topbar* | Dynamic tenant switcher separating multiple corporate entities with accurate, isolated policy counts. |
 
@@ -170,7 +184,8 @@ python -m venv venv
 # Windows: .\venv\Scripts\activate | macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 alembic upgrade head
-python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+cd ..
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 # 3. Start Frontend App (Terminal 2)
 cd frontend

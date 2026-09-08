@@ -1,5 +1,5 @@
-# ai/ — Infrastructure Layer: Claude API Integration
+# ai/ & services/ai/ — AI Layer: Google Gemini AI & Resilient Circuit Breaker
 
-Wraps all interaction with the Claude API (prompt construction, response parsing, streaming, retries) behind an interface defined in `domain/interfaces/`. Used for tasks like summarizing policy language, explaining detected conflicts in natural language, and powering Graph RAG retrieval-augmented responses.
+Wraps all interaction with Google Gemini (`google-genai` SDK, model `gemini-2.5-flash`) for obligation extraction, regulatory framework mapping, conflict explanations, and redline drafting with Pydantic JSON schemas.
 
-Kept isolated so the LLM provider/model could be swapped without touching `services/` business logic.
+Includes a global **AI Circuit Breaker** (`gemini_client.py`) that monitors for quota exhaustion (HTTP 429) or connection failures, immediately failing fast and rerouting all AI tasks to deterministic local engines (regex parsing, deontic heuristics, static regulatory knowledge bases) with zero downtime.
