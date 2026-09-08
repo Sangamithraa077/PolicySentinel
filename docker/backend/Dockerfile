@@ -38,6 +38,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     APP_ENV=development
 
 COPY backend/ backend/
+COPY scripts/ scripts/
 
 EXPOSE 8000
 
@@ -57,6 +58,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
 
 COPY --from=dependencies /opt/venv /opt/venv
 COPY backend/ backend/
+COPY scripts/ scripts/
 
 RUN useradd --create-home --uid 1000 appuser \
     && mkdir -p /app/uploads /app/logs \

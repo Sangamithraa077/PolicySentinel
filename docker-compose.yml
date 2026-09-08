@@ -110,6 +110,7 @@ services:
       # requires /app on sys.path with backend/ as an actual subdirectory
       # of it -- matching how docker/backend/Dockerfile lays out the image.
       - ./backend:/app/backend
+      - ./scripts:/app/scripts
       - backend-uploads:/app/uploads
       - backend-logs:/app/logs
     depends_on:
