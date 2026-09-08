@@ -28,35 +28,69 @@ Modern enterprise organizations face severe compliance risks and operational ove
 
 ## System Architecture & Execution Flow
 
-PolicySentinel runs an automated, fault-tolerant compliance intelligence pipeline powered by **FastAPI**, **React**, **Google Gemini**, **Z3 Theorem Prover**, and **Neo4j**:
+PolicySentinel pairs a **Clean Architecture backend** with a **resilient AI intelligence layer** and **interactive knowledge graph**:
+
+### 1. System Architecture Topology
+
+```mermaid
+flowchart TD
+    subgraph Presentation["🖥️ Presentation Tier (React 18 SPA)"]
+        UI["Executive Dashboard • Conflict Explorer • Knowledge Graph • Redline Approvals"]
+    end
+
+    subgraph Backend["⚡ Application & API Gateway (FastAPI 0.115+)"]
+        API["REST API Router • Pydantic Schemas • JWT Authentication • Audit Logging"]
+    end
+
+    subgraph Intelligence["🧠 Intelligence & Reasoning Engine"]
+        direction LR
+        PARSER["PyMuPDF & python-docx\n(Text & Clause Trees)"]
+        
+        subgraph AIService["AI Engine with Circuit Breaker"]
+            LLM["Gemini 2.5 Flash\n(Live Extraction)"]
+            CB["🛡️ Circuit Breaker\n(gemini_client.py)"]
+            LOCAL["Deterministic Fallback\n(Regex & Offline KB)"]
+            LLM -.->|429 Quota / Offline| CB --> LOCAL
+        end
+        
+        SOLVER["Z3 Theorem Prover\n(Formal Deontic Proofs)"]
+    end
+
+    subgraph Storage["💾 Persistence & Knowledge Graph"]
+        direction LR
+        DB[("PostgreSQL 16\nACID Relational Storage")]
+        GRAPH[("Neo4j 5\nKnowledge Graph & Subgraphs")]
+    end
+
+    Presentation <===>|HTTPS / REST API| Backend
+    Backend <---> Intelligence
+    Backend <---> Storage
+
+    style Presentation fill:#F8FAFC,stroke:#475569,stroke-width:1.5px,color:#0F172A
+    style Backend fill:#EFF6FF,stroke:#2563EB,stroke-width:1.5px,color:#1E3A8A
+    style Intelligence fill:#FAF5FF,stroke:#7C3AED,stroke-width:1.5px,color:#4C1D95
+    style AIService fill:#FFFFFF,stroke:#A855F7,stroke-width:1px,color:#581C87
+    style CB fill:#FEF3C7,stroke:#D97706,stroke-width:1px,color:#92400E
+    style Storage fill:#ECFDF5,stroke:#059669,stroke-width:1.5px,color:#064E3B
+```
+
+---
+
+### 2. End-to-End Execution Flow (Policy Lifecycle)
 
 ```mermaid
 flowchart LR
-    A["📄 Policy Upload\n(PDF, Word, TXT)"] --> B["✂️ Clause Parser\n(Hierarchy Tree)"]
-    B --> C["🤖 AI Extraction\n(Gemini 2.5 Flash)"]
-    
-    subgraph Resilience["🛡️ AI Circuit Breaker"]
-        C -.->|Quota 429 / Offline| CB["⚡ Local Fallback Engine\n(Regex & Heuristics)"]
-    end
-    
-    C --> D["⚖️ Dual Conflict Engine\n(Semantic AI + Z3 SMT Solver)"]
-    CB --> D
-    
-    D --> E[("🌐 Neo4j Graph &\nPostgreSQL")]
-    D --> F["📜 Regulatory Cross-Walk\n(GDPR • ISO 27001 • SEBI • RBI)"]
-    
-    E --> G["📊 Executive Dashboard\n& AI Redlines"]
-    F --> G
+    Step1["1. Policy Ingestion\n📄 Upload PDF/DOCX\n✂️ Clause Hierarchy"] 
+    --> Step2["2. AI Obligation Parsing\n🤖 Gemini 2.5 Flash\n🛡️ Failover Fallback"]
+    --> Step3["3. Conflict Analysis\n🔍 Semantic AI Engine\n⚖️ Z3 Logic Solver"]
+    --> Step4["4. Regulatory Mapping\n📜 GDPR • ISO 27001\n🏛️ SEBI • RBI"]
+    --> Step5["5. Resolution & Audit\n🌐 Neo4j Graph View\n✍️ AI Redlines & PDF"]
 
-    style A fill:#F1F5F9,stroke:#64748B,color:#0F172A
-    style B fill:#F5F3FF,stroke:#8B5CF6,color:#4C1D95
-    style C fill:#EDE9FE,stroke:#7C3AED,color:#2E1065
-    style Resilience fill:#FFFBEB,stroke:#F59E0B,color:#92400E
-    style CB fill:#FEF3C7,stroke:#D97706,color:#92400E
-    style D fill:#E0E7FF,stroke:#4F46E5,color:#1E1B4B
-    style E fill:#ECFDF5,stroke:#10B981,color:#064E3B
-    style F fill:#DBEAFE,stroke:#2563EB,color:#172554
-    style G fill:#F0FDF4,stroke:#16A34A,color:#14532D
+    style Step1 fill:#F1F5F9,stroke:#64748B,stroke-width:1.5px,color:#0F172A
+    style Step2 fill:#FAF5FF,stroke:#8B5CF6,stroke-width:1.5px,color:#4C1D95
+    style Step3 fill:#EFF6FF,stroke:#3B82F6,stroke-width:1.5px,color:#1E3A8A
+    style Step4 fill:#FEF3C7,stroke:#D97706,stroke-width:1.5px,color:#92400E
+    style Step5 fill:#ECFDF5,stroke:#10B981,stroke-width:1.5px,color:#064E3B
 ```
 
 | Stage | Process & Capability | Key Technologies & Resilience |
