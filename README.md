@@ -199,6 +199,14 @@ npm run dev
 
 ---
 
+## Documentation & Prototype Walkthrough
+
+- 📄 **[Prototype Walkthrough (PDF)](docs/PolicySentinel_Prototype_Walkthrough.pdf)**: Screen-by-screen visual walkthrough of the live working prototype across all workflows (Dashboard, Upload, Clause Hierarchy, Obligations, Conflict Dashboard, Side-by-Side Comparison, AI Redlines, Advanced Findings, Knowledge Graph Explorer, and Signed PDF Export).
+- 📘 **[System Documentation & Presentation Defense](docs/POLICY_SENTINEL_SYSTEM_DOCUMENTATION.md)**: In-depth architecture breakdown, AI circuit breaker resilience, and live demo defense guide.
+- 📐 **[System Architecture Guide](docs/architecture/ARCHITECTURE.md)**: Deep dive into the 4-tier Clean Architecture topology and execution flows.
+
+---
+
 ## Future Implementation Roadmap
 
 * **Interactive RAG Policy Chatbot**: Knowledge Graph-augmented natural language interface allowing auditors to ask questions (*"What is our maximum retention period for customer PII across all subsidiaries?"*) and receive citation-backed answers.
