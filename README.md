@@ -34,21 +34,21 @@ PolicySentinel pairs a **Clean Architecture backend** with a **resilient AI inte
 
 ```mermaid
 flowchart TD
-    subgraph Presentation["🖥️ Presentation Tier (React 18 SPA)"]
+    subgraph Presentation[" Presentation Tier (React 18 SPA)"]
         UI["Executive Dashboard • Conflict Explorer • Knowledge Graph • Redline Approvals"]
     end
 
-    subgraph Backend["⚡ Application & API Gateway (FastAPI 0.115+)"]
+    subgraph Backend[" Application & API Gateway (FastAPI 0.115+)"]
         API["REST API Router • Pydantic Schemas • JWT Authentication • Audit Logging"]
     end
 
-    subgraph Intelligence["🧠 Intelligence & Reasoning Engine"]
+    subgraph Intelligence[" Intelligence & Reasoning Engine"]
         direction LR
         PARSER["PyMuPDF & python-docx\n(Text & Clause Trees)"]
         
         subgraph AIService["AI Engine with Circuit Breaker"]
             LLM["Gemini 2.5 Flash\n(Live Extraction)"]
-            CB["🛡️ Circuit Breaker\n(gemini_client.py)"]
+            CB[" Circuit Breaker\n(gemini_client.py)"]
             LOCAL["Deterministic Fallback\n(Regex & Offline KB)"]
             LLM -.->|429 Quota / Offline| CB --> LOCAL
         end
@@ -56,7 +56,7 @@ flowchart TD
         SOLVER["Z3 Theorem Prover\n(Formal Deontic Proofs)"]
     end
 
-    subgraph Storage["💾 Persistence & Knowledge Graph"]
+    subgraph Storage[" Persistence & Knowledge Graph"]
         direction LR
         DB[("PostgreSQL 16\nACID Relational Storage")]
         GRAPH[("Neo4j 5\nKnowledge Graph & Subgraphs")]
@@ -80,11 +80,11 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    Step1["1. Policy Ingestion\n📄 Upload PDF/DOCX\n✂️ Clause Hierarchy"] 
-    --> Step2["2. AI Obligation Parsing\n🤖 Gemini 2.5 Flash\n🛡️ Failover Fallback"]
-    --> Step3["3. Conflict Analysis\n🔍 Semantic AI Engine\n⚖️ Z3 Logic Solver"]
-    --> Step4["4. Regulatory Mapping\n📜 GDPR • ISO 27001\n🏛️ SEBI • RBI"]
-    --> Step5["5. Resolution & Audit\n🌐 Neo4j Graph View\n✍️ AI Redlines & PDF"]
+    Step1["1. Policy Ingestion\n Upload PDF/DOCX\n Clause Hierarchy"] 
+    --> Step2["2. AI Obligation Parsing\n Gemini 2.5 Flash\n Failover Fallback"]
+    --> Step3["3. Conflict Analysis\n Semantic AI Engine\n Z3 Logic Solver"]
+    --> Step4["4. Regulatory Mapping\n GDPR • ISO 27001\n SEBI • RBI"]
+    --> Step5["5. Resolution & Audit\n Neo4j Graph View\n AI Redlines & PDF"]
 
     style Step1 fill:#F1F5F9,stroke:#64748B,stroke-width:1.5px,color:#0F172A
     style Step2 fill:#FAF5FF,stroke:#8B5CF6,stroke-width:1.5px,color:#4C1D95
