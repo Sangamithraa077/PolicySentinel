@@ -86,7 +86,7 @@ class PersistPolicyUploadService:
         policy_title: str,
         version_number: int,
         description: str | None,
-        auto_create_missing: bool = True,
+        auto_create_missing: bool = False,
     ) -> PersistedPolicyUpload:
         stored: StoredFile | None = None
         try:
@@ -125,42 +125,24 @@ class PersistPolicyUploadService:
                 try:
                     cid = uuid.UUID(str(company_id))
                 except (ValueError, TypeError):
-                    c_name = str(company_id).strip()
-                    company = self._db.scalar(
-                        select(Company).where(
-                            func.lower(Company.name) == c_name.lower(),
-                            Company.deleted_at.is_(None)
-                        )
-                    )
-                    if company is None:
-                        new_cid = uuid.uuid4()
+                    raise CompanyNotFoundError(f"Company '{company_id}' does not exist.")
+
+                company = self._db.scalar(
+                    select(Company).where(Company.id == cid, Company.deleted_at.is_(None))
+                )
+                if company is None:
+                    if auto_create_missing:
                         company = Company(
-                            id=new_cid,
-                            name=c_name,
+                            id=cid,
+                            name=f"Company {str(cid)[:8]}",
                             industry="Enterprise",
                             jurisdiction="General",
-                            registration_number=f"REG-{str(new_cid)[:8].upper()}",
+                            registration_number=f"REG-{str(cid)[:8].upper()}",
                         )
                         self._db.add(company)
                         self._db.flush()
-
-                if company is None and cid:
-                    company = self._db.scalar(
-                        select(Company).where(Company.id == cid, Company.deleted_at.is_(None))
-                    )
-                    if company is None:
-                        if auto_create_missing:
-                            company = Company(
-                                id=cid,
-                                name=f"Company {str(cid)[:8]}",
-                                industry="Enterprise",
-                                jurisdiction="General",
-                                registration_number=f"REG-{str(cid)[:8].upper()}",
-                            )
-                            self._db.add(company)
-                            self._db.flush()
-                        else:
-                            raise CompanyNotFoundError(f"Company '{cid}' does not exist.")
+                    else:
+                        raise CompanyNotFoundError(f"Company '{cid}' does not exist.")
 
             if company is None:
                 first_c = self._db.scalar(select(Company).where(Company.deleted_at.is_(None)).order_by(Company.created_at))
@@ -180,63 +162,80 @@ class PersistPolicyUploadService:
 
             # 2. Resolve Uploader User
             uploader = None
-            u_name = (uploaded_by_name or "").strip() or "Compliance Officer"
             from backend.models.enums import UserRole
 
-            # 1) Check if user by name already exists under THIS company
-            uploader = self._db.scalar(
-                select(User).where(
-                    func.lower(User.full_name) == u_name.lower(),
-                    User.company_id == company.id,
-                    User.deleted_at.is_(None)
-                )
-            )
-
-            # 2) If uploaded_by_user_id provided, check if it belongs to THIS company
-            if uploader is None and uploaded_by_user_id:
+            if uploaded_by_user_id:
                 try:
                     uid = uuid.UUID(str(uploaded_by_user_id))
-                    existing_user = self._db.scalar(
-                        select(User).where(User.id == uid, User.deleted_at.is_(None))
-                    )
-                    if existing_user and existing_user.company_id == company.id:
-                        uploader = existing_user
                 except (ValueError, TypeError):
-                    pass
-
-            # 3) Check if company already has any user we can use
-            if uploader is None:
-                any_user_in_comp = self._db.scalar(
+                    raise UserNotFoundError(f"User '{uploaded_by_user_id}' does not exist.")
+                existing_user = self._db.scalar(
+                    select(User).where(User.id == uid, User.deleted_at.is_(None))
+                )
+                if existing_user is not None and existing_user.company_id == company.id:
+                    uploader = existing_user
+                elif existing_user is None:
+                    if auto_create_missing:
+                        uploader = User(
+                            id=uid,
+                            company_id=company.id,
+                            email=f"user-{str(uid)[:8]}@example.com",
+                            password_hash="",
+                            full_name="Compliance Officer",
+                            role=UserRole.ADMIN,
+                            is_active=True,
+                        )
+                        self._db.add(uploader)
+                        self._db.flush()
+                    else:
+                        raise UserNotFoundError(f"User '{uid}' does not exist.")
+                else:
+                    uploader = existing_user
+            elif (uploaded_by_name or "").strip():
+                u_name = (uploaded_by_name or "").strip()
+                uploader = self._db.scalar(
+                    select(User).where(
+                        func.lower(User.full_name) == u_name.lower(),
+                        User.company_id == company.id,
+                        User.deleted_at.is_(None)
+                    )
+                )
+                if uploader is None:
+                    new_uid = uuid.uuid4()
+                    clean_user = "".join(c for c in u_name.lower() if c.isalnum()) or "user"
+                    clean_comp = "".join(c for c in company.name.lower() if c.isalnum()) or "company"
+                    candidate_email = f"{clean_user}-{str(new_uid)[:8]}@{clean_comp}.com"
+                    uploader = User(
+                        id=new_uid,
+                        company_id=company.id,
+                        email=candidate_email,
+                        password_hash="",
+                        full_name=u_name,
+                        role=UserRole.ADMIN,
+                        is_active=True,
+                    )
+                    self._db.add(uploader)
+                    self._db.flush()
+            else:
+                any_user = self._db.scalar(
                     select(User).where(User.company_id == company.id, User.deleted_at.is_(None))
                 )
-                if any_user_in_comp and not (uploaded_by_name or "").strip():
-                    uploader = any_user_in_comp
-
-            # 4) Create a fresh user for this company with a NEW UUID and unique email
-            if uploader is None:
-                new_uid = uuid.uuid4()
-                clean_user = "".join(c for c in u_name.lower() if c.isalnum()) or "user"
-                clean_comp = "".join(c for c in company.name.lower() if c.isalnum()) or "company"
-                candidate_email = f"{clean_user}@{clean_comp}.com"
-
-                # Check if email is already taken in the system
-                email_exists = self._db.scalar(
-                    select(User).where(func.lower(User.email) == candidate_email.lower(), User.deleted_at.is_(None))
-                )
-                if email_exists:
-                    candidate_email = f"{clean_user}-{str(new_uid)[:8]}@{clean_comp}.com"
-
-                uploader = User(
-                    id=new_uid,
-                    company_id=company.id,
-                    email=candidate_email,
-                    password_hash="",
-                    full_name=u_name,
-                    role=UserRole.ADMIN,
-                    is_active=True,
-                )
-                self._db.add(uploader)
-                self._db.flush()
+                if any_user:
+                    uploader = any_user
+                else:
+                    new_uid = uuid.uuid4()
+                    clean_comp = "".join(c for c in company.name.lower() if c.isalnum()) or "company"
+                    uploader = User(
+                        id=new_uid,
+                        company_id=company.id,
+                        email=f"compliance-{str(new_uid)[:8]}@{clean_comp}.com",
+                        password_hash="",
+                        full_name="Compliance Officer",
+                        role=UserRole.ADMIN,
+                        is_active=True,
+                    )
+                    self._db.add(uploader)
+                    self._db.flush()
 
             policy = Policy(
                 company=company,
@@ -344,12 +343,19 @@ class PersistPolicyUploadService:
                     # Launch background thread for AI obligation extraction, conflict analysis & Neo4j sync
                     # so that upload HTTP request returns INSTANTLY (< 1 sec) to the user UI!
                     import threading
+                    db_bind = self._db.get_bind()
 
                     def _run_async_ai_pipeline(version_id: uuid.UUID, company_id: uuid.UUID, uploader_email: str, policy_id: uuid.UUID, v_num: int):
-                        from backend.database.session import SessionLocal
                         from backend.services.compliance_dashboard_service import record_compliance_audit_log
-                        with SessionLocal() as bg_db:
+                        with Session(bind=db_bind) as bg_db:
                             try:
+                                comp_exists = bg_db.scalar(select(Company).where(Company.id == company_id))
+                                if not comp_exists:
+                                    return
+                                ver_exists = bg_db.scalar(select(PolicyVersion).where(PolicyVersion.id == version_id))
+                                if not ver_exists:
+                                    return
+
                                 from backend.services.ai.obligation_extraction_pipeline_service import ObligationExtractionPipelineService
                                 obligation_pipeline = ObligationExtractionPipelineService(bg_db)
                                 obligation_pipeline.run_pipeline(version_id)
@@ -382,7 +388,7 @@ class PersistPolicyUploadService:
                                 sync_service.sync_policy(policy_id)
                                 logger.info("Successfully synchronized policy %s to Neo4j graph", policy_id)
                             except Exception as exc:
-                                logger.error("Background AI pipeline error for version %s: %s", version_id, exc)
+                                logger.debug("Background AI pipeline finished or cancelled for version %s: %s", version_id, exc)
 
                     threading.Thread(
                         target=_run_async_ai_pipeline,

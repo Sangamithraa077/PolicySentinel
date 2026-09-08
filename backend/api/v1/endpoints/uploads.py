@@ -42,9 +42,9 @@ router = APIRouter()
 async def upload_policy_document(
     file: Annotated[UploadFile, File(description="The policy document to upload")],
     policy_title: Annotated[str, Form(min_length=1, description="Title for the new policy")],
-    company_id: Annotated[str | None, Form(description="Existing company UUID or identifier")] = None,
+    company_id: Annotated[uuid.UUID | None, Form(description="Existing company UUID or identifier")] = None,
     company_name: Annotated[str | None, Form(description="Meaningful name for new or referenced company")] = None,
-    uploaded_by_user_id: Annotated[str | None, Form(description="Existing user UUID or identifier")] = None,
+    uploaded_by_user_id: Annotated[uuid.UUID | None, Form(description="Existing user UUID or identifier")] = None,
     uploaded_by_name: Annotated[str | None, Form(description="Meaningful name for the uploader")] = None,
     version_number: Annotated[int, Form(ge=1, description="Version number for this upload")] = 1,
     description: Annotated[
@@ -63,7 +63,7 @@ async def upload_policy_document(
         policy_title=policy_title,
         version_number=version_number,
         description=description,
-        auto_create_missing=True,
+        auto_create_missing=False,
     )
     return PolicyDocumentUploadResponse(
         original_filename=persisted.original_filename,

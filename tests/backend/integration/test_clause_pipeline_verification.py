@@ -100,12 +100,17 @@ def test_complete_clause_pipeline_verification(client: TestClient, seeded_compan
     # bullet point (clauses[4]) parent is (a) list item (clauses[3])
     assert clauses[4]["parent_clause_id"] == clauses[3]["id"]
     
-    # 5. Retrieve the extracted obligations via the Obligation API
-    obligations_response = client.get("/api/v1/obligations", params={"policy_id": policy_id})
-    assert obligations_response.status_code == 200
-    
-    obligations_body = obligations_response.json()
-    obligations = obligations_body["items"]
+    # 5. Retrieve the extracted obligations via the Obligation API (polling for async background extraction)
+    import time
+    obligations = []
+    for _ in range(40):
+        obligations_response = client.get("/api/v1/obligations", params={"policy_id": policy_id})
+        assert obligations_response.status_code == 200
+        obligations_body = obligations_response.json()
+        obligations = obligations_body.get("items", [])
+        if len(obligations) > 0:
+            break
+        time.sleep(0.1)
     assert len(obligations) > 0, "No obligations were extracted"
     
     # Save a JSON file with test output for reporting

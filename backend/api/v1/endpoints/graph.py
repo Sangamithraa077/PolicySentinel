@@ -324,13 +324,14 @@ def get_policy_impact_analysis(
                 )
                 impacted_pols = [dict(record["p2"]) for record in res_pols]
 
-                return {
-                    "connected_obligations": connected_obs,
-                    "related_regulations": related_regs,
-                    "conflicts": conflicts,
-                    "recommendations": recommendations,
-                    "impacted_policies": impacted_pols
-                }
+                if connected_obs or related_regs or conflicts or recommendations or impacted_pols:
+                    return {
+                        "connected_obligations": connected_obs,
+                        "related_regulations": related_regs,
+                        "conflicts": conflicts,
+                        "recommendations": recommendations,
+                        "impacted_policies": impacted_pols
+                    }
         except Exception as exc:
             logger.error("Neo4j policy impact traversal failed: %s", exc)
 
@@ -446,7 +447,8 @@ def search_graph(
                         "type": node_type,
                         "properties": dict(node)
                     })
-                return nodes
+                if nodes:
+                    return nodes
         except Exception as exc:
             logger.error("Neo4j search failed: %s", exc)
 

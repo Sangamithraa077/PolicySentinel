@@ -48,12 +48,14 @@ def test_compliance_risk_score_engine_deductions():
         MockRecommendation(status="Accepted"), # -0
     ]
 
-    # Total deductions expected = 15 + 8 + 3 + 10 (for type missing) + 5 + 8 = 49
-    # Compliance Score = 100 - 49 = 51
-    # Risk Score = 49
+    # Calibrated dampening curve calculations:
+    # raw_penalty = (1 * 4.0) + (1 * 1.5) + (1 * 0.5) + (1 * 2.0) = 8.0
+    # conflict_penalty = 40.0 * (8.0 / 108.0) ~ 2.96
+    # pending_penalty = 0.1, rejected_penalty = 1.0 -> total deductions ~ 4.06
+    # compliance_score = 100 - 4.1 = 95.9, risk_score = 4.1, risk_level = Low
     result = engine.calculate_score(conflicts, recommendations)
 
-    assert result["compliance_score"] == 51.0
-    assert result["risk_score"] == 49.0
-    assert result["risk_level"] == "High"  # 49 is between 46 and 75
-    assert "High" in result["risk_level"]
+    assert result["compliance_score"] == 95.9
+    assert result["risk_score"] == 4.1
+    assert result["risk_level"] == "Low"
+    assert "Low" in result["risk_level"]

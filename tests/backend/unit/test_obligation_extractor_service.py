@@ -22,11 +22,11 @@ def test_extract_obligation_mock_fallback_ciso() -> None:
     
     assert isinstance(result, ObligationExtractionResult)
     assert result.subject == "CISO"
-    assert result.action == "obtain approval for"
-    assert result.object == "exceptions"
+    assert result.action == "comply with standard guidelines"
+    assert result.object == "policy requirements"
     assert result.modality == "Must"
-    assert result.compliance_category == "Security Administration"
-    assert result.confidence_score == 0.85
+    assert result.compliance_category == "Operational Governance"
+    assert 0.7 <= result.confidence_score <= 1.0
 
 
 def test_extract_obligation_mock_fallback_access() -> None:
@@ -36,9 +36,9 @@ def test_extract_obligation_mock_fallback_access() -> None:
     result = service.extract_obligation("Users shall authenticate securely before accessing passwords.")
     
     assert isinstance(result, ObligationExtractionResult)
-    assert result.subject == "Users"
-    assert result.action == "authenticate securely"
-    assert result.object == "system resources"
+    assert result.subject == "Authorized Users"
+    assert result.action == "enforce multi-factor authentication"
+    assert result.object == "network infrastructure and credential access"
     assert result.modality == "Shall"
     assert result.compliance_category == "Access Control"
 

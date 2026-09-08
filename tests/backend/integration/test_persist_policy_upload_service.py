@@ -194,11 +194,19 @@ def test_persist_automatically_extracts_text_for_pdf(
     assert len(clauses) > 0
     assert clauses[0].text == "This is a PDF document content for auto extraction testing."
 
-    # Verify that obligations were automatically extracted and stored
+    # Verify that obligations were automatically extracted and stored (via async background thread)
+    import time
     from backend.models.obligation import Obligation
-    obligations = db_session.scalars(
-        select(Obligation).where(Obligation.policy_id == result.policy_id)
-    ).all()
+    obligations = []
+    for _ in range(20):
+        db_session.expire_all()
+        obligations = db_session.scalars(
+            select(Obligation).where(Obligation.policy_id == result.policy_id)
+        ).all()
+        if len(obligations) > 0:
+            break
+        time.sleep(0.5)
+
     assert len(obligations) > 0
     assert obligations[0].clause_id == clauses[0].id
     assert obligations[0].subject is not None
@@ -286,10 +294,17 @@ def test_persist_automatically_detects_conflicts(
         description="Auto conflict pipeline test",
     )
 
-    # 3. Verify that conflicts were automatically detected and stored in the database
-    conflicts = db_session.scalars(
-        select(Conflict).where(Conflict.target_policy_id == result.policy_id)
-    ).all()
+    # 3. Verify that conflicts were automatically detected and stored in the database (via async background thread)
+    import time
+    conflicts = []
+    for _ in range(20):
+        db_session.expire_all()
+        conflicts = db_session.scalars(
+            select(Conflict).where(Conflict.target_policy_id == result.policy_id)
+        ).all()
+        if len(conflicts) > 0:
+            break
+        time.sleep(0.5)
 
     # Since the mock generator generates deterministic obligations, the compared obligations
     # between the newly uploaded policy and the existing one should match rules

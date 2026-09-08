@@ -139,14 +139,13 @@ def test_policy_health_score_and_dashboard_verification(db_session: Session, see
     health_engine = PolicyHealthScoreEngine(db_session)
     health_res = health_engine.calculate_health_score(policy.id)
     
-    # Expected deductions:
-    # Base: 100
-    # Penalty conflict (high): -10
-    # Penalty missing mapping (ob_2 mapping framework = NONE): -5
-    # Penalty stale version (age > 365 days): -8
-    # Bonus approved recommendation: +5
-    # Total score: 100 - 10 - 5 - 8 + 5 = 82.0
-    assert health_res.score == 82.0
+    # Calibrated composite health score:
+    # conflict_score: 89.7 * 0.40 = 35.9
+    # mapping_score: 50.0 * 0.35 = 17.5
+    # freshness_score: 70.0 * 0.25 = 17.5
+    # remediation_bonus: 2.5
+    # Total score: 35.9 + 17.5 + 17.5 + 2.5 = 73.4
+    assert health_res.score == 73.4
     assert health_res.grade == "B"
     assert len(health_res.risk_factors) == 3
 
@@ -155,7 +154,7 @@ def test_policy_health_score_and_dashboard_verification(db_session: Session, see
     res_health = client.get(f"/api/v1/regulatory-mappings/health/{policy.id}")
     assert res_health.status_code == 200
     data_health = res_health.json()
-    assert data_health["score"] == 82.0
+    assert data_health["score"] == 73.4
     assert data_health["grade"] == "B"
     assert len(data_health["risk_factors"]) == 3
 
@@ -182,13 +181,13 @@ def test_policy_health_score_and_dashboard_verification(db_session: Session, see
     dashboard_service = ComplianceDashboardService(db_session)
     summary = dashboard_service.get_executive_summary(company_id)
     assert "average_policy_health_score" in summary
-    assert summary["average_policy_health_score"] == 82.0
+    assert summary["average_policy_health_score"] == 73.4
 
     # Query dashboard summary endpoint
     res_summary = client.get(f"/api/v1/compliance-dashboard/summary?company_id={company_id}")
     assert res_summary.status_code == 200
     data_summary = res_summary.json()
-    assert data_summary["average_policy_health_score"] == 82.0
+    assert data_summary["average_policy_health_score"] == 73.4
 
     # 6. Verify Regulatory Compliance Dashboard rendering
     import pathlib

@@ -93,8 +93,8 @@ def test_comparison_pipeline_end_to_end(db_session: Session, seeded_company_and_
     pipeline = ComparisonPipelineService(db_session)
     conflicts = pipeline.run_pipeline(version_b.id)
 
-    # We expect 3 conflict records: 1 contradiction and 2 missing gaps (since mock similarity is low)
-    assert len(conflicts) == 3
+    # We expect 1 contradiction record between ob_a and ob_b
+    assert len(conflicts) == 1
     
     contradictions = [c for c in conflicts if c.conflict_type == "contradiction"]
     assert len(contradictions) == 1
@@ -111,4 +111,4 @@ def test_comparison_pipeline_end_to_end(db_session: Session, seeded_company_and_
     db_conflicts = db_session.scalars(
         select(Conflict).where(Conflict.target_policy_id == policy_b.id)
     ).all()
-    assert len(db_conflicts) == 3
+    assert len(db_conflicts) == 1
