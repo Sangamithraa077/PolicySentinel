@@ -28,100 +28,44 @@ Modern enterprise organizations face severe compliance risks and operational ove
 
 ## System Architecture & Execution Flow
 
-PolicySentinel is engineered with a **4-tier Clean Architecture** coupled with a high-availability **AI Circuit Breaker & Local Deterministic Engine**:
-
-```mermaid
-flowchart TB
-    subgraph UI["1. Presentation Layer (React 18 SPA)"]
-        direction LR
-        A1["Executive Dashboard\n(/, /executive-dashboard)"]
-        A2["Conflict & Graph Explorer\n(/conflicts, /knowledge-graph)"]
-        A3["AI Redlines & Regulatory\n(/recommendations, /regulatory-dashboard)"]
-    end
-
-    subgraph API["2. API & Gateway Layer (FastAPI 0.115+)"]
-        B["FastAPI Asynchronous Gateway\nJWT Authentication • Pydantic Schema Validation • CORS • Dependency Injection"]
-    end
-
-    subgraph Core["3. Intelligence & Core Engine Layer"]
-        C1["Document Parser\n(PyMuPDF & python-docx)"]
-        C2["Clause Segmentation &\nOutline Tree Builder"]
-        C3{"Google Gemini AI\n(gemini-2.5-flash)"}
-        CB["🛡️ AI Circuit Breaker (gemini_client.py)\nFail-fast on 429 Quota / Network Downtime"]
-        C4["Deterministic Local Fallback Engine\n(Regex Modality • Heuristic Redlines • Offline Statutory KB)"]
-        C5["Z3 SMT Solver\n(Formal Deontic Contradiction Proofs)"]
-    end
-
-    subgraph Data["4. Persistence & Graph Layer"]
-        D1[("PostgreSQL 16\nACID Relational Storage\n(Policies, Clauses, Audit Logs)")]
-        D2[("Neo4j 5 Graph DB\nKnowledge Graph\n(Transitive Traversal & Subgraphs)")]
-    end
-
-    UI <===>|REST API / JSON| B
-    B --> C1 --> C2 --> C3
-    C3 -->|Structured JSON Output| B
-    C3 -.->|429 Quota / Key Unset| CB
-    CB ==>|Instant Failover| C4
-    C4 -.->|Fallback Output| B
-    C2 --> C5
-    C5 -.->|UNSAT / SAT Proofs| B
-    B <===>|SQLAlchemy ORM| D1
-    B <===>|Bolt Driver / Cypher| D2
-
-    style UI fill:#F8FAFC,stroke:#64748B,color:#0F172A
-    style API fill:#EFF6FF,stroke:#3B82F6,color:#1E3A8A
-    style Core fill:#FAF5FF,stroke:#8B5CF6,color:#4C1D95
-    style Data fill:#ECFDF5,stroke:#10B981,color:#064E3B
-    style CB fill:#FEF3C7,stroke:#D97706,color:#92400E
-```
-
----
-
-### End-to-End Execution Flow (The 5-Stage Pipeline)
-
-Every policy uploaded to PolicySentinel traverses an automated, deterministic 5-stage compliance pipeline:
+PolicySentinel runs an automated, fault-tolerant compliance intelligence pipeline powered by **FastAPI**, **React**, **Google Gemini**, **Z3 Theorem Prover**, and **Neo4j**:
 
 ```mermaid
 flowchart LR
-    S1["1. Ingest & Parse\n(.pdf, .docx, .txt)"] --> S2["2. Obligation Extraction\n(Gemini + Circuit Breaker)"]
-    S2 --> S3["3. Conflict Analysis\n(Semantic + Z3 Formal Logic)"]
-    S3 --> S4["4. Regulatory Cross-Walk\n(GDPR, ISO 27001, SEBI, RBI)"]
-    S4 --> S5["5. Graph Sync & Redlines\n(Neo4j + 1-Click Approvals)"]
+    A["📄 Policy Upload\n(PDF, Word, TXT)"] --> B["✂️ Clause Parser\n(Hierarchy Tree)"]
+    B --> C["🤖 AI Extraction\n(Gemini 2.5 Flash)"]
+    
+    subgraph Resilience["🛡️ AI Circuit Breaker"]
+        C -.->|Quota 429 / Offline| CB["⚡ Local Fallback Engine\n(Regex & Heuristics)"]
+    end
+    
+    C --> D["⚖️ Dual Conflict Engine\n(Semantic AI + Z3 SMT Solver)"]
+    CB --> D
+    
+    D --> E[("🌐 Neo4j Graph &\nPostgreSQL")]
+    D --> F["📜 Regulatory Cross-Walk\n(GDPR • ISO 27001 • SEBI • RBI)"]
+    
+    E --> G["📊 Executive Dashboard\n& AI Redlines"]
+    F --> G
 
-    style S1 fill:#F3E8FF,stroke:#9333EA,color:#3B0764
-    style S2 fill:#EDE9FE,stroke:#7C3AED,color:#2E1065
-    style S3 fill:#E0E7FF,stroke:#4F46E5,color:#1E1B4B
-    style S4 fill:#DBEAFE,stroke:#2563EB,color:#172554
-    style S5 fill:#D1FAE5,stroke:#059669,color:#064E3B
+    style A fill:#F1F5F9,stroke:#64748B,color:#0F172A
+    style B fill:#F5F3FF,stroke:#8B5CF6,color:#4C1D95
+    style C fill:#EDE9FE,stroke:#7C3AED,color:#2E1065
+    style Resilience fill:#FFFBEB,stroke:#F59E0B,color:#92400E
+    style CB fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style D fill:#E0E7FF,stroke:#4F46E5,color:#1E1B4B
+    style E fill:#ECFDF5,stroke:#10B981,color:#064E3B
+    style F fill:#DBEAFE,stroke:#2563EB,color:#172554
+    style G fill:#F0FDF4,stroke:#16A34A,color:#14532D
 ```
 
-#### 1. Ingestion & Hierarchical Clause Parsing
-- **Inputs**: Corporate document uploads (`.pdf`, `.docx`, `.txt`, `.md`).
-- **Processing**: [PyMuPDF](https://pymupdf.readthedocs.io/) and `python-docx` extract raw text, typography, headings, and metadata.
-- **Output**: A structured, numbered clause outline tree preserving indentation, sub-clauses, and parent-child document hierarchy.
-
-#### 2. AI Obligation Extraction with Circuit Breaker
-- **Primary Processing**: Google Gemini 2.5 Flash analyzes each clause with strict Pydantic JSON schemas, breaking legalese into structured quadruples: `[Subject, Modality, Action, Object]`.
-- **🛡️ Circuit Breaker Resilience**: If Google Gemini API quota is exhausted (HTTP 429 `RESOURCE_EXHAUSTED`) or network connectivity drops, the global circuit breaker (`gemini_client.py`) fail-fast trips to our **Local Deterministic Fallback Engine** (regex deontic parsing: `MUST`, `SHALL`, `SHOULD`, `MAY`). **Zero downtime, zero 500 errors.**
-
-#### 3. Multi-Dimensional Conflict Analysis & Formal Verification
-- **Dual-Engine Detection**:
-  - **Semantic Comparison Engine**: Computes pairwise cosine and token similarity across organizational policies to detect semantic divergence.
-  - **Z3 Theorem Prover**: Formulates formal deontic logic formulas to mathematically prove satisfiability (SAT) vs irreconcilable contradictions (UNSAT).
-- **Taxonomy Detected**: Direct Contradictions, Modality Erosion (`MUST` downgraded to `SHOULD`), Temporal Rot (conflicting retention windows like 90 days vs 7 years), Scope Overlaps, and Threshold Discrepancies.
-
-#### 4. Regulatory Knowledge Base Mapping
-- **Statutory Frameworks**: Simultaneously cross-references extracted obligations against built-in compliance baselines:
-  - **GDPR** (Articles 5, 17, 30, 32, 33)
-  - **ISO/IEC 27001** (Annex A Controls)
-  - **SEBI Cybersecurity & Cyber Resilience Framework (CSCRF)**
-  - **RBI Master Direction on IT Governance & Cybersecurity**
-- **Output**: Clause-level statutory citations, gap classifications, and policy compliance grades (A/B/C).
-
-#### 5. Knowledge Graph Synchronization, AI Redlines & Executive PDF
-- **Neo4j Knowledge Graph**: Syncs policy nodes, clause hierarchies, obligation relationships (`CONFLICT`, `REDUNDANT`, `COMPLEMENTARY`), and impact paths into Neo4j 5. Compliance officers can visually traverse multi-hop impact radius queries.
-- **Actionable AI Redlines**: Generates side-by-side redline recommendations with one-click **Accept / Reject** human-in-the-loop audit logging.
-- **Executive Audit Export**: One-click generation of audit-ready compliance PDF reports complete with executive scores, risk distributions, and timestamped audit trails.
+| Stage | Process & Capability | Key Technologies & Resilience |
+| :--- | :--- | :--- |
+| **1. Ingest & Parse** | Ingests corporate documents, strips formatting, and builds hierarchical numbered clause trees. | PyMuPDF, python-docx |
+| **2. Obligation Extraction** | Decomposes legalese into normalized quadruples: `[Subject, Modality, Action, Object]`. | **Google Gemini 2.5 Flash** with **AI Circuit Breaker** (instantly fails over to local regex/heuristics on 429 quota limits — zero downtime). |
+| **3. Conflict Detection** | Detects direct contradictions, modality erosion (`MUST` → `SHOULD`), and retention mismatches. | **Dual Engine**: Semantic AI + **Z3 SMT Theorem Prover** for formal mathematical proofs. |
+| **4. Regulatory Mapping** | Maps obligations directly against statutory controls and calculates policy health grades (A/B/C). | **GDPR**, **ISO 27001**, **SEBI CSCRF**, **RBI Master Direction** |
+| **5. Graph & Resolution** | Interactively traverses policy impact subgraphs, drafts AI redlines (Accept/Reject), and exports signed audit PDFs. | **Neo4j 5**, PostgreSQL 16, Interactive React Graph, PDF Engine |
 
 
 ---
