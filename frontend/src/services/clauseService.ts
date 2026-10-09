@@ -1,5 +1,5 @@
 import { apiClient } from "@/services/apiClient";
-import type { ClauseListResponse } from "@/types/clause";
+import type { Clause, ClauseListResponse } from "@/types/clause";
 
 /** GET /clauses's max allowed page size (see backend/api/v1/endpoints/clauses.py) —
  * used as the default so the clause viewer loads a whole document in one request
@@ -29,8 +29,8 @@ export async function listClauses(params: ListClausesParams = {}): Promise<Claus
   return response.data;
 }
 
-export async function getClause(clauseId: string): Promise<any> {
-  const response = await apiClient.get<any>(`/clauses/${clauseId}`);
+export async function getClause(clauseId: string): Promise<Clause> {
+  const response = await apiClient.get<Clause>(`/clauses/${clauseId}`);
   return response.data;
 }
 
