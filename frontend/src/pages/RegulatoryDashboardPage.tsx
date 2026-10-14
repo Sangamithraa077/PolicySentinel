@@ -38,7 +38,7 @@ export function RegulatoryDashboardPage() {
         try {
           const res = await getPolicyHealthScore(p.id);
           results[p.id] = { score: res.score, grade: res.grade };
-        } catch (e) {
+        } catch {
           results[p.id] = { score: 100, grade: "A" };
         }
       }

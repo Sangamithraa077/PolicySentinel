@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Loader2, Share2, Info, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { usePolicies } from "@/hooks/usePolicies";
 import { apiClient } from "@/services/apiClient";
@@ -8,7 +8,7 @@ interface GraphNodeData {
   id: string;
   label: string;
   type: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   x?: number;
   y?: number;
   fx?: number;
@@ -19,7 +19,7 @@ interface GraphEdgeData {
   source: string;
   target: string;
   type: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
 }
 
 interface GraphResponseData {
@@ -28,11 +28,11 @@ interface GraphResponseData {
 }
 
 interface ImpactAnalysisData {
-  connected_obligations: any[];
-  related_regulations: any[];
-  conflicts: any[];
-  recommendations: any[];
-  impacted_policies: any[];
+  connected_obligations: unknown[];
+  related_regulations: unknown[];
+  conflicts: unknown[];
+  recommendations: unknown[];
+  impacted_policies: unknown[];
 }
 
 export function KnowledgeGraphPage() {
@@ -50,7 +50,7 @@ export function KnowledgeGraphPage() {
 
   // 1. Fetch policies
   const policiesQuery = usePolicies();
-  const policies = policiesQuery.data?.items ?? [];
+  const policies = useMemo(() => policiesQuery.data?.items ?? [], [policiesQuery.data]);
 
   // Set default policy
   useEffect(() => {

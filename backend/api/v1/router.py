@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 
 from backend.api.dependencies.common import get_app_settings
 from backend.api.v1.endpoints import clauses, debug, policies, uploads, obligations, comparison, conflicts, recommendations, compliance_dashboard, relationships, findings, regulatory_mappings, graph
-from backend.config.settings import Settings
+from backend.config.settings import Settings, get_settings
 
 api_router = APIRouter()
 
@@ -26,7 +26,10 @@ api_router.include_router(relationships.router, prefix="/relationships", tags=["
 api_router.include_router(findings.router, prefix="/findings", tags=["Findings"])
 api_router.include_router(regulatory_mappings.router, prefix="/regulatory-mappings", tags=["Regulatory Mappings"])
 api_router.include_router(graph.router, prefix="/graph", tags=["Knowledge Graph"])
-api_router.include_router(debug.router, prefix="/debug", tags=["Debug"])
+
+# Development-only: never expose the debug endpoints in production.
+if get_settings().APP_ENV != "production":
+    api_router.include_router(debug.router, prefix="/debug", tags=["Debug"])
 
 
 @api_router.get("/", tags=["Meta"], summary="API version metadata")

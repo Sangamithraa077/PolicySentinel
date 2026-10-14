@@ -4,18 +4,28 @@ import {
   ShieldCheck, ArrowRightLeft, AlertTriangle, Sparkles, Share2, 
   LayoutDashboard, Loader2 
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { apiClient } from "@/services/apiClient";
+import type { Policy } from "@/types/policy";
+
+interface DemoState {
+  activePolicy?: Policy;
+  activeVersion?: unknown;
+  clauses?: unknown[];
+  obligations?: unknown[];
+  conflicts?: { ai_explanation?: string; severity?: string }[];
+}
 
 interface DemoStep {
   title: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   actionText: string;
 }
 
 export function DemoModePage() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [demoState, setDemoState] = useState<Record<string, any>>({});
+  const [demoState, setDemoState] = useState<DemoState>({});
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionLogs, setExecutionLogs] = useState<string[]>([]);
 
@@ -185,7 +195,7 @@ export function DemoModePage() {
           const nodes = response.data?.nodes || [];
           const edges = response.data?.edges || [];
           log(`Graph response loaded: ${nodes.length} Nodes, ${edges.length} Edges.`);
-          log(`Node types present: ${Array.from(new Set(nodes.map((n: any) => n.type))).join(", ")}`);
+          log(`Node types present: ${Array.from(new Set(nodes.map((n: { type: string }) => n.type))).join(", ")}`);
         }
       } 
       
@@ -201,14 +211,14 @@ export function DemoModePage() {
           const response = await apiClient.get("/policies");
           const items = response.data?.items || [];
           if (items.length > 0) {
-            const summaryRes = await apiClient.get(`/compliance-dashboard/summary?company_id={items[0].company_id}`);
+            const summaryRes = await apiClient.get(`/compliance-dashboard/summary?company_id=${items[0].company_id}`);
             log(`Overall Company Compliance Score: ${summaryRes.data?.compliance_score || 100}`);
           }
         }
       }
       
-    } catch (err: any) {
-      log(`Execution failure: ${err.message || err}`);
+    } catch (err) {
+      log(`Execution failure: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsExecuting(false);
     }

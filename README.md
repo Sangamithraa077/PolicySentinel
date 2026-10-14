@@ -39,7 +39,7 @@ flowchart TD
     end
 
     subgraph Backend[" Application & API Gateway (FastAPI 0.115+)"]
-        API["REST API Router • Pydantic Schemas • JWT Authentication • Audit Logging"]
+        API["REST API Router • Pydantic Schemas • Audit Logging"]
     end
 
     subgraph Intelligence[" Intelligence & Reasoning Engine"]
@@ -53,7 +53,7 @@ flowchart TD
             LLM -.->|429 Quota / Offline| CB --> LOCAL
         end
         
-        SOLVER["Z3 Theorem Prover\n(Formal Deontic Proofs)"]
+        SOLVER["Rule-Based Conflict Engine\n(Deterministic Modality Checks)"]
     end
 
     subgraph Storage[" Persistence & Knowledge Graph"]
@@ -82,7 +82,7 @@ flowchart TD
 flowchart LR
     Step1["1. Policy Ingestion\n Upload PDF/DOCX\n Clause Hierarchy"] 
     --> Step2["2. AI Obligation Parsing\n Gemini 2.5 Flash\n Failover Fallback"]
-    --> Step3["3. Conflict Analysis\n Semantic AI Engine\n Z3 Logic Solver"]
+    --> Step3["3. Conflict Analysis\n Semantic AI Engine\n Rule-Based Checks"]
     --> Step4["4. Regulatory Mapping\n GDPR • ISO 27001\n SEBI • RBI"]
     --> Step5["5. Resolution & Audit\n Neo4j Graph View\n AI Redlines & PDF"]
 
@@ -97,7 +97,7 @@ flowchart LR
 | :--- | :--- | :--- |
 | **1. Ingest & Parse** | Ingests corporate documents, strips formatting, and builds hierarchical numbered clause trees. | PyMuPDF, python-docx |
 | **2. Obligation Extraction** | Decomposes legalese into normalized quadruples: `[Subject, Modality, Action, Object]`. | **Google Gemini 2.5 Flash** with **AI Circuit Breaker** (instantly fails over to local regex/heuristics on 429 quota limits — zero downtime). |
-| **3. Conflict Detection** | Detects direct contradictions, modality erosion (`MUST` → `SHOULD`), and retention mismatches. | **Dual Engine**: Semantic AI + **Z3 SMT Theorem Prover** for formal mathematical proofs. |
+| **3. Conflict Detection** | Detects direct contradictions, modality erosion (`MUST` → `SHOULD`), and retention mismatches. | **Dual Engine**: Semantic AI + a deterministic **rule-based engine** that compares obligation modality, subject and action. |
 | **4. Regulatory Mapping** | Maps obligations directly against statutory controls and calculates policy health grades (A/B/C). | **GDPR**, **ISO 27001**, **SEBI CSCRF**, **RBI Master Direction** |
 | **5. Graph & Resolution** | Interactively traverses policy impact subgraphs, drafts AI redlines (Accept/Reject), and exports signed audit PDFs. | **Neo4j 5**, PostgreSQL 16, Interactive React Graph, PDF Engine |
 
@@ -135,7 +135,7 @@ flowchart LR
 | **Knowledge Graph** | Neo4j, Bolt Driver | Neo4j 5 Community | High-performance graph database storing policy hierarchies, obligation relationships, and impact analysis paths. |
 | **AI & LLM Services** | Google Gemini AI | `google-genai` SDK | Clause extraction, obligation decomposition, regulatory mapping, and redline drafting with schema-enforced JSON. |
 | **Document Parsers** | PyMuPDF, python-docx | Latest | Fast, robust local extraction of text, tables, and metadata from PDF and Word documents. |
-| **Formal Reasoning** | Z3 Theorem Prover | `z3-solver` | Mathematical validation of deontic logic and modality contradictions. |
+| **Formal Reasoning** *(planned)* | Z3 Theorem Prover | — | Not yet implemented. Planned for mathematical validation of deontic logic and modality contradictions. |
 
 ---
 
@@ -215,7 +215,7 @@ npm run dev
 
 <div align="center">
 
-PolicySentinel delivers enterprise compliance assurance through automated policy cross-referencing, formal logic validation, and AI-powered redlines.
+PolicySentinel delivers enterprise compliance assurance through automated policy cross-referencing, rule-based conflict validation, and AI-powered redlines.
 
 *Built with precision for robust, audit-ready compliance.❤️*
 
